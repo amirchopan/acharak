@@ -1,0 +1,3868 @@
+/* ==========================================================================
+   style.css
+   سیستم طراحی بر اساس Volvo Cars Web Design System
+   RTL کامل - فارسی - پشتیبانی از حالت روز/شب
+   ========================================================================== */
+
+/* ---------- فونت Vazirmatn (نسخه اعداد فارسی) ---------- */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("../assets/fonts/Vazirmatn/Vazirmatn-FD-Regular.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("../assets/fonts/Vazirmatn/Vazirmatn-FD-Medium.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("../assets/fonts/Vazirmatn/Vazirmatn-FD-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("../assets/fonts/Vazirmatn/Vazirmatn-FD-Bold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IranSansX";
+  src: url("../assets/fonts/IranSansX/IRANYekanXFaNum-Regular.woff")
+    format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IranSansX";
+  src: url("../assets/fonts/IranSansX/IRANYekanXFaNum-Medium.woff")
+    format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IranSansX";
+  src: url("../assets/fonts/IranSansX/IRANYekanXFaNum-DemiBold.woff")
+    format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IranSansX";
+  src: url("../assets/fonts/IranSansX/IRANYekanXFaNum-Bold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Dana";
+  src: url("../assets/fonts/Dana/DanaFaNum-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dana";
+  src: url("../assets/fonts/Dana/DanaFaNum-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dana";
+  src: url("../assets/fonts/Dana/DanaFaNum-DemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dana";
+  src: url("../assets/fonts/Dana/DanaFaNum-Bold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF-Arabic-Rounded";
+  src: url("../assets/fonts/SF/SF-Arabic-Rounded.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SF-Pro-Rounded";
+  src: url("../assets/fonts/SF/SF-Pro-Rounded-Light.otf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- توکن‌های طراحی (تک‌رنگ مشکی/سفید + رنگ‌های وضعیت) ---------- */
+:root {
+  /* --font-family: "SF-Pro-Rounded", "SF-Arabic-Rounded"; */
+  --font-family: "IranSansX";
+
+  /* رنگ‌های وضعیت — فقط برای نشانه‌های success/warning/danger و آیکون روز/شب */
+  --success: #34c759;
+  --warning: #ff8d28;
+  --danger: #ff383c;
+  --sun-color: #ffcc00;
+  --moon-color: #6155f5;
+
+  /* پس‌زمینه‌ها */
+  --bg-primary: #f2f2f7;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f0f0f0;
+  --bg-grouped: #fafafa;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(23, 23, 23, 0.64);
+
+  /* متن / نمادها */
+  --label-primary: #000000;
+  --label-secondary: #636366;
+  --label-tertiary: #636366;
+  --label-quaternary: rgba(0, 0, 0, 0.28);
+
+  /* خطوط جداکننده و کادر */
+  --separator: rgba(0, 0, 0, 0.12);
+  --separator-opaque: #e3e3e3;
+
+  /* سطوح پر (فیل) کنترل‌ها */
+  --fill-primary: rgba(0, 0, 0, 0.08);
+  --fill-secondary: rgba(0, 0, 0, 0.06);
+  --fill-tertiary: rgba(0, 0, 0, 0.08);
+
+  /* سطح خنثی (دکمه اصلی: مشکی روی زمینه سفید، برعکس در تم شب) */
+  --surface-neutral: #000000;
+  --on-surface-neutral: #ffffff;
+
+  /* تأکید = خود رنگ متن اصلی (تک‌رنگ)، به‌جای آبی برند */
+  --accent: var(--label-primary);
+  --accent-strong: color-mix(in srgb, var(--label-primary) 24%, transparent);
+  --accent-medium: color-mix(in srgb, var(--label-primary) 16%, transparent);
+  --accent-subtle: color-mix(in srgb, var(--label-primary) 8%, transparent);
+
+  --destructive: var(--danger);
+  --destructive-surface: var(--danger);
+  --success-surface: var(--success);
+  --feedback-orange-bg: color-mix(
+    in srgb,
+    var(--warning) 14%,
+    var(--bg-elevated)
+  );
+  --feedback-red-bg: color-mix(in srgb, var(--danger) 12%, var(--bg-elevated));
+  --feedback-green-bg: color-mix(
+    in srgb,
+    var(--success) 14%,
+    var(--bg-elevated)
+  );
+  --feedback-gray-bg: #f0f0f0;
+
+  /* شکل: یک مقیاس یکپارچه در کل پروژه - صاف به‌جز دکمه‌ها/پیل‌ها/دایره‌ها */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+
+  /* بدون سایه دکوراتیو؛ عمق از طریق کنتراست سطحی و کادر خط‌مو تأمین می‌شود */
+  --shadow-card: none;
+  --shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.18);
+  --shadow-fab: none;
+
+  --ease-standard: cubic-bezier(0.45, 0, 0.4, 1);
+  --ease-entrance: cubic-bezier(0, 0, 0.1, 1);
+  --icon-3xs: 12px;
+  --icon-2xs: 14px;
+  --icon-xs: 16px;
+  --icon-sm: 18px;
+  --icon-md: 20px;
+  --icon-lg: 22px;
+  --icon-xl: 32px;
+  --icon-2xl: 56px;
+  --tab-bar-height: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* حالت شب پیش‌فرض بر اساس سیستم */
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) {
+    --success: #30d158;
+    --warning: #ff9230;
+    --danger: #ff4245;
+    --sun-color: #ffd600;
+    --moon-color: #6d7cff;
+
+    --bg-primary: #000000;
+    --bg-secondary: #1c1c1e;
+    --bg-tertiary: #1c1c1c;
+    --bg-grouped: #171717;
+    --bg-elevated: #171717;
+    --bg-overlay: rgba(9, 9, 9, 0.72);
+
+    --label-primary: #ffffff;
+    --label-secondary: #aeaeb2;
+    --label-tertiary: #aeaeb2;
+    --label-quaternary: rgba(255, 255, 255, 0.28);
+
+    --separator: rgba(255, 255, 255, 0.16);
+    --separator-opaque: #2c2c2c;
+
+    --fill-primary: rgba(255, 255, 255, 0.1);
+    --fill-secondary: rgba(255, 255, 255, 0.08);
+    --fill-tertiary: rgba(255, 255, 255, 0.06);
+
+    --surface-neutral: #ffffff;
+    --on-surface-neutral: #000000;
+
+    --destructive-surface: var(--danger);
+    --success-surface: var(--success);
+    --feedback-orange-bg: color-mix(
+      in srgb,
+      var(--warning) 18%,
+      var(--bg-elevated)
+    );
+    --feedback-red-bg: color-mix(
+      in srgb,
+      var(--danger) 16%,
+      var(--bg-elevated)
+    );
+    --feedback-green-bg: color-mix(
+      in srgb,
+      var(--success) 18%,
+      var(--bg-elevated)
+    );
+    --feedback-gray-bg: #242424;
+
+    --shadow-card: none;
+    --shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* حالت شب اجباری (انتخاب دستی کاربر) */
+:root.theme-dark {
+  --success: #30d158;
+  --warning: #ff9230;
+  --danger: #ff4245;
+  --sun-color: #ffd600;
+  --moon-color: #6d7cff;
+
+  --bg-primary: #000000;
+  --bg-secondary: #1c1c1e;
+  --bg-tertiary: #1c1c1c;
+  --bg-grouped: #171717;
+  --bg-elevated: #171717;
+  --bg-overlay: rgba(9, 9, 9, 0.72);
+
+  --label-primary: #ffffff;
+  --label-secondary: #aeaeb2;
+  --label-tertiary: #aeaeb2;
+  --label-quaternary: rgba(255, 255, 255, 0.28);
+
+  --separator: rgba(255, 255, 255, 0.16);
+  --separator-opaque: #2c2c2c;
+
+  --fill-primary: rgba(255, 255, 255, 0.1);
+  --fill-secondary: rgba(255, 255, 255, 0.08);
+  --fill-tertiary: rgba(255, 255, 255, 0.06);
+
+  --surface-neutral: #ffffff;
+  --on-surface-neutral: #000000;
+
+  --destructive-surface: var(--danger);
+  --success-surface: var(--success);
+  --feedback-orange-bg: color-mix(
+    in srgb,
+    var(--warning) 18%,
+    var(--bg-elevated)
+  );
+  --feedback-red-bg: color-mix(in srgb, var(--danger) 16%, var(--bg-elevated));
+  --feedback-green-bg: color-mix(
+    in srgb,
+    var(--success) 18%,
+    var(--bg-elevated)
+  );
+  --feedback-gray-bg: #242424;
+
+  --shadow-card: none;
+  --shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- ریست و پایه ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background: var(--bg-primary);
+  color: var(--label-primary);
+  direction: rtl;
+  text-align: right;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.55;
+  transition:
+    background 0.25s var(--ease-standard),
+    color 0.25s var(--ease-standard);
+  overscroll-behavior-y: none;
+}
+body.no-scroll {
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+  font-family: inherit;
+}
+button {
+  font-family: inherit;
+}
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+  font-family: inherit;
+}
+input,
+textarea,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- اطمینان از ارث‌بری فونت در تمام المان‌ها ---------- */
+table,
+th,
+td,
+label,
+span,
+div,
+li,
+ul,
+ol,
+fieldset,
+legend,
+details,
+summary {
+  font-family: inherit;
+}
+
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px calc(var(--tab-bar-height) + 96px + var(--safe-bottom));
+  min-height: 100%;
+  transition: opacity 0.15s ease;
+}
+#app.is-loading {
+  opacity: 0.4;
+}
+
+.sf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+}
+.sf-inline {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+/* آیکن‌ها با mask تا رنگ currentColor بگیرند و کشیده نشوند */
+.sf-icon {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  background-color: currentColor;
+  -webkit-mask-image: var(--sf-url);
+  mask-image: var(--sf-url);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  vertical-align: middle;
+}
+img.sf-icon {
+  width: 1.15em;
+  height: 1.15em;
+  object-fit: contain;
+  object-position: center;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  background: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* ---------- سربرگ صفحات ---------- */
+.page-header {
+  padding: 12px 2px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.page-header__subtitle {
+  color: var(--label-secondary);
+  font-size: 14px;
+  margin-top: 4px;
+}
+.page-header--form {
+  justify-content: flex-start;
+}
+.page-header--form h1 {
+  font-size: 20px;
+}
+.page-header__back {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--fill-tertiary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.page-header__back .sf-icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+.page-header__action {
+  border: none;
+  background: var(--fill-tertiary);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--label-primary);
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 22px 2px 10px;
+}
+.section-header h2 {
+  font-size: 19px;
+  font-weight: 600;
+}
+.section-header__link {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.section-block {
+  margin-top: 22px;
+}
+.section-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 2px 10px;
+}
+.section-block__header h2 {
+  font-size: 17px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.section-block__icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  display: inline-flex;
+}
+.section-block__icon .sf-icon,
+.sf.section-block__icon .sf-icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+/* ---------- کارت ---------- */
+.card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+
+/* ---------- کارت خودرو ---------- */
+/* ---------- کارت خودرو (مثل dash-summary) ---------- */
+.car-card {
+  position: relative;
+  width: 100%;
+  display: block;
+  margin-bottom: 12px;
+  border: none;
+  cursor: pointer;
+  text-align: right;
+  color: inherit;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.car-card__photo-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 var(--car-fade-solid, 25%),
+    transparent var(--car-fade-end, 100%)
+  );
+  mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 var(--car-fade-solid, 25%),
+    transparent var(--car-fade-end, 100%)
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: 0.32;
+}
+:root.theme-dark .car-card__photo-bg {
+  opacity: 0.42;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .car-card__photo-bg {
+    opacity: 0.42;
+  }
+}
+
+.car-card__photo-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.78) 100%
+  );
+}
+:root.theme-dark .car-card__photo-scrim {
+  background: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.42) 50%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .car-card__photo-scrim {
+    background: linear-gradient(
+      to left,
+      rgba(0, 0, 0, 0.12) 0%,
+      rgba(0, 0, 0, 0.42) 50%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  }
+}
+
+.car-card__content {
+  position: relative;
+  z-index: 2;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.car-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.car-card__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--label-primary);
+  flex: 1;
+  min-width: 0;
+  letter-spacing: -0.02em;
+}
+
+.car-card__chevron {
+  color: var(--label-quaternary);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.car-card__chevron .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+
+.car-card__subtitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--label-secondary);
+}
+
+.car-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.car-card__color {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--label-primary);
+  background: var(--fill-tertiary);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.car-card--photo .car-card__color {
+  background: rgba(255, 255, 255, 0.72);
+}
+:root.theme-dark .car-card--photo .car-card__color {
+  background: rgba(44, 44, 46, 0.78);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .car-card--photo .car-card__color {
+    background: rgba(44, 44, 46, 0.78);
+  }
+}
+
+.car-card__plate-mount {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* در RTL: meta از راست شروع می‌شود: رنگ سپس پلاک */
+.car-card__meta {
+  justify-content: flex-start;
+}
+
+.car-card__plate-mount .iran-plate--sm {
+  height: 36px;
+}
+
+.car-card__placeholder {
+  opacity: 0.5;
+  width: 26px;
+  height: 26px;
+}
+.car-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.car-card__plate {
+  font-size: 13px;
+  color: var(--label-secondary);
+}
+
+/* ---------- باکس آپلود تصویر خودرو ---------- */
+.photo-drop {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: var(--fill-tertiary);
+  border: 1.5px dashed
+    color-mix(in srgb, var(--label-tertiary) 55%, transparent);
+  min-height: 160px;
+  overflow: hidden;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  animation: photoDropIn 0.35s var(--ease-standard, ease) both;
+}
+
+@keyframes photoDropIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.photo-drop.is-dragover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--fill-tertiary));
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.photo-drop__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.photo-drop__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 160px;
+  padding: 24px 16px;
+  cursor: pointer;
+  text-align: center;
+  color: var(--label-tertiary);
+}
+
+.photo-drop__icon {
+  width: 36px;
+  height: 36px;
+  color: var(--label-tertiary);
+  margin-bottom: 4px;
+  display: inline-flex;
+}
+.photo-drop__icon .sf-icon {
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+}
+
+.photo-drop__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label-secondary);
+}
+
+.photo-drop__or {
+  font-size: 12px;
+  color: var(--label-tertiary);
+}
+
+.photo-drop__browse {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.photo-drop__preview {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  animation: photoPreviewIn 0.3s var(--ease-standard, ease) both;
+}
+
+@keyframes photoPreviewIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.photo-drop__preview img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-drop__actions {
+  position: absolute;
+  inset-inline-end: 10px;
+  top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.photo-drop__btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--label-primary);
+  box-shadow: none;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+:root.theme-dark .photo-drop__btn {
+  background: rgba(44, 44, 46, 0.85);
+  color: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .photo-drop__btn {
+    background: rgba(44, 44, 46, 0.85);
+    color: #fff;
+  }
+}
+.photo-drop__btn:active {
+  transform: scale(0.92);
+  opacity: 0.85;
+}
+.photo-drop__btn .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.photo-drop__btn--edit {
+  color: var(--accent);
+}
+.photo-drop__btn--edit .sf-icon {
+  color: var(--accent);
+  background-color: var(
+    --accent
+  ); /* اگر mask با currentColor است، color کافی است */
+}
+
+.photo-drop__btn--remove {
+  color: var(--destructive); /* قرمز */
+}
+.photo-drop__btn--remove .sf-icon {
+  color: var(--destructive);
+}
+
+.plate-field {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.3s var(--ease-standard, ease);
+  overflow: hidden;
+}
+
+.plate-field.is-collapsing {
+  grid-template-rows: 0fr;
+}
+
+.plate-field > .iran-plate-widget {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.plate-field .iran-plate-widget {
+  animation: plateIn 0.32s var(--ease-standard, ease) both;
+}
+
+.plate-field .iran-plate-widget.is-leaving {
+  animation: plateOut 0.28s var(--ease-standard, ease) both;
+}
+
+@keyframes plateIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes plateOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+.photo-drop.is-removing .photo-drop__preview {
+  animation: photoPreviewOut 0.28s var(--ease-standard, ease) both;
+}
+
+@keyframes photoPreviewOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+/* ---------- کارت سرویس ---------- */
+.service-card {
+  margin-bottom: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+.service-card__main {
+  width: 100%;
+  text-align: right;
+  border: none;
+  background: none;
+  padding: 16px 16px 12px;
+  cursor: pointer;
+  color: inherit;
+}
+.service-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.service-card__car {
+  font-size: 16px;
+  font-weight: 600;
+}
+.service-card__date {
+  font-size: 13px;
+  color: var(--label-secondary);
+}
+.service-card__row--meta {
+  margin-top: 6px;
+}
+.service-card__km {
+  font-size: 13px;
+  color: var(--label-secondary);
+}
+.service-card__cost {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.service-card__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.service-card__preview-btn {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--separator);
+  background: var(--fill-tertiary);
+  padding: 11px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.pill {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--fill-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--label-primary);
+}
+.pill--muted {
+  color: var(--label-tertiary);
+}
+.pill--removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+  margin-left: 8px;
+  margin-bottom: 8px;
+  border: none;
+  cursor: pointer;
+}
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 0 12px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+}
+.search-row__icon {
+  width: 17px;
+  height: 17px;
+  color: var(--label-tertiary);
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.search-row__icon .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.search-row__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  height: 44px;
+  font-size: 15px;
+  color: var(--label-primary);
+}
+.search-row__input:focus {
+  outline: none;
+}
+.search-row__filter-btn {
+  border: none;
+  background: var(--fill-tertiary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.search-row__filter-btn .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+/* ---------- حالت خالی ---------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 60px 20px;
+  gap: 8px;
+}
+.empty-state__icon {
+  width: 56px;
+  height: 56px;
+  opacity: 0.35;
+  margin-bottom: 6px;
+  color: var(--label-tertiary);
+}
+.empty-state__icon .sf-icon {
+  width: var(--icon-2xl);
+  height: var(--icon-2xl);
+}
+.empty-state h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+.empty-state p {
+  color: var(--label-secondary);
+  font-size: 14px;
+  max-width: 280px;
+}
+.empty-state .btn {
+  margin-top: 14px;
+}
+.empty-state__inline {
+  color: var(--label-tertiary);
+  font-size: 13.5px;
+  padding: 18px 4px;
+  text-align: center;
+}
+
+/* ---------- دکمه‌ها ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.12s var(--ease-standard),
+    opacity 0.12s;
+}
+.btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+.btn--block {
+  width: 100%;
+}
+.btn--primary {
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+}
+.btn--secondary {
+  background: transparent;
+  border-color: var(--label-primary);
+  color: var(--label-primary);
+}
+.btn--destructive {
+  background: transparent;
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+.btn--small {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: var(--radius-pill);
+}
+
+/* ---------- دکمه شناور FAB ---------- */
+.fab {
+  position: fixed;
+  left: 16px;
+  right: auto;
+  bottom: calc(var(--tab-bar-height) + 18px + var(--safe-bottom));
+  transform: none;
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: var(--shadow-fab);
+  cursor: pointer;
+  z-index: 40;
+  transition: transform 0.15s var(--ease-standard);
+  max-width: calc(100vw - 32px);
+}
+.fab:active {
+  transform: scale(0.95);
+}
+.fab__icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+}
+.fab__icon .sf-icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+/* ---------- نوار پیمایش پایین ---------- */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--separator);
+  padding-bottom: var(--safe-bottom);
+  z-index: 30;
+}
+.tab-bar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px 6px;
+  color: var(--label-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+}
+.tab-bar__icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+}
+.tab-bar__icon .sf-icon {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+.tab-bar__item.is-active {
+  color: var(--accent);
+}
+
+/* ---------- فرم‌ها ---------- */
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  padding: 0 2px;
+}
+.field__hint {
+  font-size: 12px;
+  color: var(--accent);
+  padding: 0 2px;
+}
+.field__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--label-primary);
+  flex-direction: row;
+}
+.field__checkbox-label input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.text-input {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
+  padding: 13px 14px;
+  font-size: 15px;
+  color: var(--label-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.text-input:focus {
+  border-color: var(--accent);
+}
+.text-input--button {
+  text-align: right;
+  cursor: pointer;
+  color: var(--label-primary);
+}
+.text-area {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+}
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+.input-with-btn .text-input {
+  flex: 1;
+}
+
+/* ---------- combobox ---------- */
+.combobox {
+  width: 100%;
+}
+.combobox__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
+  padding: 13px 14px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--label-primary);
+}
+.combobox__placeholder {
+  color: var(--label-tertiary);
+}
+.combobox__chevron {
+  color: var(--label-tertiary);
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.combobox__chevron .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+.combobox__search-wrap {
+  margin-bottom: 12px;
+}
+.combobox__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.combobox__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: right;
+  border: none;
+  background: none;
+  padding: 13px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--label-primary);
+}
+.combobox__row:active,
+.combobox__row.is-selected {
+  background: var(--fill-tertiary);
+}
+.combobox__row-meta {
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--label-tertiary);
+}
+
+.combobox__row--back {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.combobox__empty {
+  text-align: center;
+  color: var(--label-tertiary);
+  padding: 30px 0;
+  font-size: 14px;
+}
+
+.year-combo__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.year-combo__chevron {
+  color: var(--label-tertiary);
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.year-combo__chevron .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+.year-combo-sheet__toggle {
+  margin-bottom: 16px;
+}
+.color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--separator);
+  flex-shrink: 0;
+}
+
+/* ---------- Segmented Control ---------- */
+.segmented {
+  display: flex;
+  background: var(--fill-tertiary);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  gap: 2px;
+}
+.segmented__item {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 8px 6px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    transform 0.12s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.segmented__item:active {
+  transform: scale(0.97);
+}
+.segmented__item.is-active {
+  background: var(--bg-secondary);
+  color: var(--label-primary);
+  box-shadow: none;
+}
+.segmented__icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+}
+.segmented__icon .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+
+.catalog-row--added {
+  border-inline-start-color: transparent;
+}
+
+.segmented__item--status.is-active {
+  background: var(--status-bg) !important;
+  color: var(--status-fg) !important;
+  box-shadow: none;
+}
+
+.segmented__item--status:not(.is-active) {
+  color: var(--label-secondary);
+}
+
+.segmented--payment-status .segmented__item {
+  white-space: nowrap;
+  font-size: 12.5px;
+  padding: 7px 4px;
+}
+.segmented--paid .segmented__item.is-active {
+  background: color-mix(in srgb, var(--success) 16%, var(--bg-secondary));
+  color: var(--success);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: none;
+}
+
+/* ---------- ردیف خدمات سرویس (HIG) ---------- */
+.service-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.svc-item-row {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+  /* بدون border کناری / active */
+  border: none;
+}
+
+.svc-item-row__main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.svc-item-row__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label-primary);
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+}
+
+.svc-item-row__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+  flex-wrap: nowrap;
+}
+
+.svc-item-row__cost,
+.svc-item-row__note {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  background: var(--fill-tertiary);
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.svc-item-row__remove {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--fill-tertiary);
+  color: var(--destructive);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.svc-item-row__remove .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+
+.svc-item-row__remove:active {
+  opacity: 0.75;
+  transform: scale(0.96);
+}
+
+/* ---------- Toast ---------- */
+#toast-container {
+  position: fixed;
+  top: 18px;
+  right: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 200;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-elevated);
+  color: var(--label-primary);
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-elevated);
+  font-size: 13.5px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-14px);
+  transition:
+    opacity 0.25s var(--ease-standard),
+    transform 0.25s var(--ease-standard);
+}
+.toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.toast--success .toast__icon {
+  color: var(--success);
+}
+.toast--error .toast__icon {
+  color: var(--danger);
+}
+
+/* ---------- Overlay / Alert ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  padding: 20px;
+}
+.overlay.is-visible {
+  opacity: 1;
+}
+.alert-box {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 22px 20px 16px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  transform: scale(0.9);
+  transition: transform 0.2s var(--ease-standard);
+  box-shadow: var(--shadow-elevated);
+}
+.overlay.is-visible .alert-box {
+  transform: scale(1);
+}
+.alert-box__title {
+  font-size: 16.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.alert-box__message {
+  font-size: 13.5px;
+  color: var(--label-secondary);
+  margin-bottom: 18px;
+}
+.alert-box__actions {
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--separator);
+  padding-top: 12px;
+}
+.alert-box__btn {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--label-primary);
+}
+.alert-box__btn--confirm {
+  color: var(--accent);
+  font-weight: 600;
+}
+.alert-box__btn--destructive {
+  color: var(--destructive);
+  font-weight: 600;
+}
+
+/* ---------- Sheet ---------- */
+.overlay--sheet {
+  align-items: flex-end;
+  padding: 0;
+}
+.sheet {
+  background: var(--bg-primary);
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s var(--ease-standard);
+  box-shadow: var(--shadow-elevated);
+}
+.sheet--small {
+  max-height: 60vh;
+}
+.sheet--full {
+  max-height: 96vh;
+  height: 96vh;
+}
+.overlay--sheet.is-visible .sheet {
+  transform: translateY(0);
+}
+.sheet__grabber {
+  width: 36px;
+  height: 5px;
+  background: var(--separator-opaque);
+  border-radius: var(--radius-pill);
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+.sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 18px 14px;
+  flex-shrink: 0;
+}
+.sheet__title {
+  font-size: 17px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+.sheet__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+.sheet__close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--fill-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--label-secondary);
+}
+.sheet__body {
+  overflow-y: auto;
+  padding: 4px 18px 28px;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- انتخابگر تاریخ ---------- */
+.datepicker__cols {
+  display: flex;
+  gap: 8px;
+  height: 220px;
+  margin-bottom: 16px;
+}
+.datepicker__col {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y proximity;
+  background: var(--fill-tertiary);
+  border-radius: var(--radius-md);
+  padding: 6px 0;
+}
+.datepicker__item {
+  display: block;
+  width: 100%;
+  text-align: center;
+  border: none;
+  background: none;
+  padding: 11px 4px;
+  font-size: 15px;
+  color: var(--label-secondary);
+  cursor: pointer;
+  scroll-snap-align: center;
+}
+.datepicker__item.is-active {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 17px;
+}
+
+/* ---------- پلاک ایران (نزدیک به نمونه واقعی) ---------- */
+.iran-plate-widget {
+  width: 100%;
+}
+
+.iran-plate {
+  display: flex;
+  align-items: stretch;
+  direction: ltr;
+  width: 100%;
+  max-width: 420px;
+  height: 72px;
+  margin: 0 auto;
+  background: #fff;
+  border: 2.5px solid #1a1a1a;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-family); /* فونت پیش‌فرض برنامه */
+  color: #111;
+}
+
+/* نوار آبی چپ */
+.iran-plate__blue {
+  width: 48px;
+  flex-shrink: 0;
+  background: #003399;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px 6px;
+}
+
+.iran-plate__flag {
+  width: 28px;
+  height: 18px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.iran-plate__flag-stripe {
+  flex: 1;
+  display: block;
+}
+.iran-plate__flag-stripe--g {
+  background: #239f40;
+}
+.iran-plate__flag-stripe--w {
+  background: #fff;
+}
+.iran-plate__flag-stripe--r {
+  background: #da0000;
+}
+
+.iran-plate__ir-text {
+  color: #fff;
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: left; /* چپ‌چین */
+  align-self: flex-start;
+  width: 100%;
+  padding-inline: 4px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* گروه‌های ارقام */
+.iran-plate__group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 100%;
+}
+
+.iran-plate__digit {
+  width: 1.15em;
+  min-width: 22px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #111;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+.iran-plate__digit::placeholder {
+  color: rgba(17, 17, 17, 0.28);
+  font-weight: 600;
+}
+.iran-plate__digit:focus {
+  outline: none;
+  background: var(--accent-subtle);
+}
+
+.iran-plate__group--part1 {
+  flex: 0 0 18%;
+  min-width: 56px;
+}
+.iran-plate__group--part2 {
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+/* حرف */
+.iran-plate__letter {
+  flex: 0 0 14%;
+  min-width: 40px;
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #111;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.iran-plate__letter:focus,
+.iran-plate__letter:active {
+  background: var(--accent-subtle);
+  outline: none;
+}
+.iran-plate__letter-ph {
+  color: rgba(17, 17, 17, 0.28);
+  font-size: 26px;
+  font-weight: 600;
+}
+
+/* ستون استان — راست */
+.iran-plate__province {
+  flex: 0 0 22%;
+  min-width: 64px;
+  border-left: 2.5px solid #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 4px 2px;
+}
+
+.iran-plate__iran-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: #111;
+  font-family: inherit;
+  margin-bottom: 2px;
+}
+
+.iran-plate__group--part3 {
+  height: auto;
+  gap: 1px;
+}
+.iran-plate__group--part3 .iran-plate__digit {
+  font-size: 28px;
+  height: 32px;
+  min-width: 18px;
+}
+
+/* تم تاریک: پلاک همیشه سفید واقعی بماند */
+:root.theme-dark .iran-plate,
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .iran-plate {
+    background: #fff;
+    color: #111;
+  }
+}
+
+.plate-letter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.plate-letter-grid__item {
+  padding: 16px 0;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--fill-tertiary);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--label-primary);
+}
+.plate-letter-grid__item.is-active {
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+}
+
+.iran-plate--sm {
+  height: 44px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  border-width: 1.5px;
+}
+.iran-plate--sm .iran-plate__blue {
+  width: 32px;
+  padding: 4px 2px 3px;
+}
+.iran-plate--sm .iran-plate__flag {
+  width: 18px;
+  height: 12px;
+}
+.iran-plate--sm .iran-plate__ir-text {
+  font-size: 6px;
+  text-align: left;
+  padding-inline: 2px;
+}
+.iran-plate--sm .iran-plate__digit,
+.iran-plate--sm .iran-plate__digit--static,
+.iran-plate--sm .iran-plate__group--part3 .iran-plate__digit,
+.iran-plate--sm .iran-plate__group--part3 .iran-plate__digit--static {
+  font-size: 16px;
+  min-width: 12px;
+  width: auto;
+  font-weight: 600;
+  font-family: var(--font-family);
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.iran-plate--sm .iran-plate__letter,
+.iran-plate--sm .iran-plate__letter--static {
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  font-family: var(--font-family);
+  color: #111;
+}
+.iran-plate--sm .iran-plate__iran-label {
+  font-size: 8px;
+}
+.iran-plate--sm .iran-plate__province {
+  border-left-width: 1.5px;
+  min-width: 44px;
+  flex-basis: 20%;
+}
+
+.iran-plate-widget--display {
+  width: auto;
+  max-width: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.plate-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  direction: ltr;
+  background: #fff;
+  border: 1.5px solid #1a1a1a;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  padding: 5px 8px;
+  margin: 0;
+  font-family: var(--font-family);
+  color: #111;
+  line-height: 1;
+}
+
+.plate-view__group {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.plate-view__d {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 0.6em;
+  text-align: center;
+  color: #111;
+}
+
+.plate-view__letter {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 1em;
+  text-align: center;
+  color: #111;
+  pointer-events: none;
+  cursor: default;
+}
+
+.plate-view__sep {
+  width: 1.5px;
+  height: 20px;
+  background: #1a1a1a;
+  flex-shrink: 0;
+  margin-inline: 2px;
+}
+
+.plate-view__prov {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1;
+}
+
+.plate-view__group--prov .plate-view__d {
+  font-size: 14px;
+}
+
+/* تم تاریک: پلاک سفید واقعی بماند */
+:root.theme-dark .plate-view,
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .plate-view {
+    /* background: #fff; */
+    color: #111;
+    border-color: #1a1a1a;
+  }
+}
+
+.iran-plate-display__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--label-tertiary);
+  font-weight: 600;
+}
+.iran-plate-widget--display .iran-plate {
+  margin: 0;
+}
+
+.dash-summary__stat--plate .iran-plate--sm {
+  height: 40px;
+}
+
+.dash-summary__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.dash-summary__stat--plate {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* در RTL می‌شود سمت چپ ردیف بصری؛ اگر خواستی flex-start بگذار */
+  min-width: 0;
+}
+
+.dash-summary__plate-mount {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+
+.dash-summary__plate-mount .plate-view {
+  transform: scale(0.95);
+  transform-origin: center;
+}
+
+/* موبایل باریک: همچنان یک ردیف، فونت/پلاک جمع‌وجورتر */
+@media (max-width: 400px) {
+  .dash-summary__grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) auto;
+    gap: 6px;
+  }
+  .dash-summary__stat-label {
+    font-size: 10.5px;
+  }
+  .dash-summary__stat-value {
+    font-size: 13px;
+  }
+  .dash-summary__plate-mount .plate-view {
+    transform: scale(0.88);
+    padding: 4px 6px;
+  }
+  .dash-summary__plate-mount .plate-view__d,
+  .dash-summary__plate-mount .plate-view__letter {
+    font-size: 12px;
+  }
+  .dash-summary__plate-mount .plate-view__iran {
+    font-size: 7px;
+  }
+}
+
+/* قانون قدیمی که ستون آخر را span می‌کرد حذف کن اگر هست */
+@media (max-width: 380px) {
+  .dash-summary__grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) auto;
+  }
+  .dash-summary__grid > :last-child {
+    grid-column: auto; /* نه span 2 */
+  }
+}
+
+.dash-summary__plate-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-start; /* در RTL: سمت راست کارت */
+}
+
+.dash-summary__plate-mount .plate-view__d,
+.dash-summary__plate-mount .plate-view__letter {
+  font-size: 16px;
+}
+.dash-summary__plate-mount .plate-view__iran {
+  font-size: 9px;
+}
+/* ---------- عکس (باکس حرفه‌ای انتخاب/حذف تصویر) ---------- */
+.photo-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.photo-box__preview {
+  width: 84px;
+  height: 84px;
+  border-radius: var(--radius-md);
+  background: var(--fill-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: var(--label-tertiary);
+}
+.photo-box__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-box__preview .sf-icon {
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+}
+.photo-box__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.photo-box__actions .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.photo-box__input {
+  display: none;
+}
+
+/* ---------- مشخصات دیگر (نمایش درون‌خطی با انیمیشن) ---------- */
+.other-spec-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.other-spec-trigger__chevron .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+  color: var(--label-tertiary);
+  transition: transform 0.2s var(--ease-standard);
+}
+.other-spec-trigger.is-open .other-spec-trigger__chevron .sf-icon {
+  transform: rotate(180deg);
+}
+.other-spec-trigger__text {
+  flex: 1;
+  text-align: right;
+}
+.other-spec-trigger .form-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  color: var(--label-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.other-spec-trigger .form-reset-btn:hover,
+.other-spec-trigger .form-reset-btn:focus-visible {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.other-spec-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  transition:
+    grid-template-rows 0.28s var(--ease-standard),
+    opacity 0.22s var(--ease-standard),
+    margin-top 0.28s var(--ease-standard);
+}
+.other-spec-panel[hidden] {
+  display: grid !important;
+  pointer-events: none;
+}
+.other-spec-panel.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 12px;
+  pointer-events: auto;
+}
+.other-spec-panel__inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-inline-start: 2px;
+  min-height: 0;
+}
+.other-spec-panel__inner .section-block {
+  margin-top: 0;
+}
+
+/* ---------- کارت‌های کوچک (خدمات/کالا/یادآور) ---------- */
+.mini-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-card);
+}
+.mini-card--reminder.is-done {
+  opacity: 0.5;
+}
+.mini-card__info {
+  flex: 1;
+  min-width: 0;
+}
+.mini-card__title {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.mini-card__sub {
+  font-size: 12.5px;
+  color: var(--label-secondary);
+  margin-top: 2px;
+}
+.mini-card__remove,
+.mini-card__edit {
+  border: none;
+  background: var(--fill-tertiary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mini-card__remove {
+  color: var(--destructive);
+}
+.mini-card__edit {
+  color: var(--accent);
+}
+.mini-card__remove .sf-icon,
+.mini-card__edit .sf-icon {
+  width: var(--icon-3xs);
+  height: var(--icon-3xs);
+}
+.mini-card--editable {
+  align-items: flex-start;
+}
+.mini-card__cost-input {
+  margin-top: 6px;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  width: 100%;
+  max-width: 180px;
+}
+.mini-card__checkbox-wrap input {
+  width: 21px;
+  height: 21px;
+  accent-color: var(--accent);
+}
+
+/* ---------- Catalog page ---------- */
+.catalog-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.catalog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.catalog-row {
+  border-inline-start: none;
+}
+
+.catalog-row__title {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* ---------- Stepper ---------- */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.stepper__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--fill-tertiary);
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--accent);
+}
+.stepper__value {
+  font-size: 17px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* ---------- صورتحساب / رسید ---------- */
+.invoice-preview {
+  display: flex;
+  flex-direction: column;
+}
+.invoice-preview__row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 2px;
+  font-size: 14px;
+}
+.invoice-preview__divider {
+  height: 1px;
+  background: var(--separator);
+  margin: 6px 0;
+}
+.invoice-preview__total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 4px 2px;
+}
+
+.receipt__header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.receipt__car {
+  font-size: 16px;
+  font-weight: 600;
+}
+.receipt__meta {
+  font-size: 12.5px;
+  color: var(--label-secondary);
+  margin-top: 4px;
+}
+.receipt__divider {
+  height: 1px;
+  background: var(--separator);
+  margin: 14px 0;
+}
+.receipt__divider--dashed {
+  background: none;
+  border-top: 1.5px dashed var(--separator-opaque);
+}
+.receipt__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.receipt__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.receipt__row-text {
+  display: flex;
+  flex-direction: column;
+}
+.receipt__row-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.receipt__row-sub {
+  font-size: 12px;
+  color: var(--label-tertiary);
+}
+.receipt__row-cost {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.receipt__total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 17px;
+  font-weight: 600;
+  padding-top: 4px;
+}
+.receipt__empty {
+  text-align: center;
+  color: var(--label-tertiary);
+  padding: 20px;
+}
+
+.receipt__toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 4px;
+}
+.receipt__save-btn,
+.receipt__save-btn--sheet {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--fill-tertiary);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition:
+    transform 0.12s,
+    background 0.15s;
+}
+
+.receipt__save-btn:active,
+.receipt__save-btn--sheet:active {
+  transform: scale(0.94);
+  background: var(--fill-secondary);
+}
+.receipt__save-btn .sf-icon,
+.receipt__save-btn--sheet .sf-icon {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+.sheet__close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--fill-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--label-secondary);
+  flex-shrink: 0;
+  padding: 0;
+}
+.sheet__close .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+
+/* ---------- داشبورد ---------- */
+.dash-car-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+  scrollbar-width: none;
+}
+.dash-car-strip::-webkit-scrollbar {
+  display: none;
+}
+.dash-car-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px 6px 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  color: var(--label-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.dash-car-chip.is-active {
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+}
+.dash-car-chip__photo {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--fill-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+.dash-car-chip__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dash-summary {
+  position: relative;
+  margin-top: 10px;
+  padding: 0;
+  overflow: hidden;
+}
+.dash-summary__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 var(--dash-fade-solid, 25%),
+    transparent var(--dash-fade-end, 100%)
+  );
+  mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 var(--dash-fade-solid, 25%),
+    transparent var(--dash-fade-end, 100%)
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: 0.32; /* تم روز */
+}
+:root.theme-dark .dash-summary__photo {
+  opacity: 0.42; /* تم شب */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .dash-summary__photo {
+    opacity: 0.42;
+  }
+}
+.dash-summary__photo-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.78) 100%
+  );
+}
+:root.theme-dark .dash-summary__photo-scrim {
+  background: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.42) 50%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .dash-summary__photo-scrim {
+    background: linear-gradient(
+      to left,
+      rgba(0, 0, 0, 0.12) 0%,
+      rgba(0, 0, 0, 0.42) 50%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  }
+}
+.dash-summary__content {
+  position: relative;
+  z-index: 2;
+  padding: 16px;
+}
+.dash-summary__title-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.dash-summary__car-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--label-primary);
+  letter-spacing: -0.02em;
+  flex: 1;
+  min-width: 0;
+}
+.dash-summary__car-subtitle {
+  margin: -8px 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--label-secondary);
+}
+.dash-summary__update-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.dash-summary__update-icon {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: var(--fill-tertiary);
+  color: var(--label-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.dash-summary__update-icon .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.dash-summary__update-icon:active {
+  opacity: 0.75;
+  transform: scale(0.94);
+}
+.dash-summary--photo .dash-summary__update-icon {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent);
+}
+:root.theme-dark .dash-summary--photo .dash-summary__update-icon {
+  background: rgba(44, 44, 46, 0.78);
+  color: var(--accent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .dash-summary--photo .dash-summary__update-icon {
+    background: rgba(44, 44, 46, 0.78);
+    color: var(--accent);
+  }
+}
+.dash-summary__row--top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dash-summary__label {
+  font-size: 12.5px;
+  color: var(--label-secondary);
+}
+.dash-summary__km {
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 2px;
+  color: var(--label-primary);
+}
+.dash-summary__updated {
+  font-size: 11.5px;
+  color: var(--label-tertiary);
+  margin-top: 3px;
+}
+.dash-summary__divider {
+  height: 1px;
+  background: var(--separator);
+  margin: 16px 0;
+}
+
+.dash-summary__stat-label {
+  font-size: 11.5px;
+  color: var(--label-tertiary);
+  margin-bottom: 4px;
+}
+.dash-summary__stat-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--label-primary);
+}
+
+.dash-quick {
+  margin-top: 16px;
+}
+.dash-quick__buttons {
+  display: flex;
+  gap: 10px;
+}
+.quick-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px 8px;
+  cursor: pointer;
+  color: var(--label-primary);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.quick-action-btn:active {
+  background: var(--fill-tertiary);
+}
+.quick-action-btn__icon {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+  display: inline-flex;
+}
+.quick-action-btn__icon .sf-icon {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+.dash-recent {
+  margin-top: 4px;
+}
+
+/* ---------- تنظیمات ---------- */
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-actions .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.settings-footnote {
+  text-align: center;
+  color: var(--label-tertiary);
+  font-size: 12.5px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+.settings-nav-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+.settings-nav-row__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  background: var(--fill-tertiary);
+  color: var(--accent);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.settings-nav-row__icon .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.settings-nav-row__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.settings-nav-row__title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--label-primary);
+}
+.settings-nav-row__sub {
+  font-size: 12.5px;
+  color: var(--label-secondary);
+}
+.settings-nav-row__chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--label-tertiary);
+  flex-shrink: 0;
+}
+.reminders-manager {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- ریسپانسیو ---------- */
+@media (min-width: 700px) {
+  #app {
+    padding-top: 24px;
+  }
+  .field-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+/* ---------- برچسب با آیکن ---------- */
+.field__label-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-secondary);
+}
+.field__label-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  display: inline-flex;
+}
+.field__label-icon .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+
+/* ---------- ردیف قیمت + تعداد کالا ---------- */
+.goods-price-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.goods-price-row .text-input {
+  flex: 1;
+  min-width: 0;
+}
+.stepper--inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--fill-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+}
+.stepper--inline .stepper__btn {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+.stepper--inline .stepper__value {
+  font-size: 15px;
+  min-width: 20px;
+}
+
+/* ---------- کارت فشرده خدمات ---------- */
+.mini-card--compact {
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+.mini-card--compact .mini-card__title {
+  font-size: 13.5px;
+}
+.mini-card--compact .mini-card__sub {
+  font-size: 12px;
+}
+.mini-card--compact .mini-card__cost-input {
+  margin-top: 4px;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  max-width: 140px;
+}
+
+/* ---------- pill قابل حذف ---------- */
+.pill--removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+  margin-left: 6px;
+  margin-bottom: 6px;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  transition:
+    opacity 0.15s,
+    transform 0.12s;
+}
+.pill--removable:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+.pill--removable .sf-icon {
+  width: var(--icon-3xs);
+  height: var(--icon-3xs);
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 4px 0 10px;
+  min-height: 0;
+}
+
+.pill--oil {
+  background: var(--feedback-orange-bg);
+  color: var(--warning);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.pill--oil__icon,
+.pill--oil .sf-icon {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  flex-shrink: 0;
+  justify-content: center;
+}
+:root.theme-dark .pill--oil {
+  background: var(--feedback-orange-bg);
+  color: var(--warning);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) .pill--oil {
+    background: var(--feedback-orange-bg);
+    color: var(--warning);
+  }
+}
+
+/* ---------- انیمیشن‌ها ---------- */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+#app > * {
+  animation: fadeSlideIn 0.28s var(--ease-standard) both;
+}
+.card,
+.mini-card,
+.catalog-row,
+.service-card,
+.car-card {
+  animation: scaleIn 0.22s var(--ease-standard) both;
+}
+.car-card:nth-child(1),
+.service-card:nth-child(1),
+.mini-card:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.car-card:nth-child(2),
+.service-card:nth-child(2),
+.mini-card:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.car-card:nth-child(3),
+.service-card:nth-child(3),
+.mini-card:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.car-card:nth-child(4),
+.service-card:nth-child(4),
+.mini-card:nth-child(4) {
+  animation-delay: 0.11s;
+}
+
+.toast {
+  transition:
+    opacity 0.25s var(--ease-standard),
+    transform 0.25s var(--ease-standard);
+}
+.sheet {
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.overlay {
+  transition: opacity 0.22s ease;
+}
+
+.tab-bar__item {
+  transition: color 0.18s var(--ease-standard);
+}
+.tab-bar__item .sf-icon {
+  transition: transform 0.18s var(--ease-standard);
+}
+.tab-bar__item.is-active .sf-icon {
+  transform: scale(1.08);
+}
+
+.btn {
+  transition:
+    transform 0.12s var(--ease-standard),
+    opacity 0.12s,
+    background 0.15s;
+}
+.fab {
+  animation: scaleIn 0.3s var(--ease-standard) both;
+  transition:
+    transform 0.15s var(--ease-standard),
+    box-shadow 0.15s;
+}
+
+/* ---------- اصلاح padding/margin ---------- */
+.form-stack {
+  gap: 16px;
+}
+.section-block {
+  margin-top: 20px;
+}
+.page-header {
+  padding: 10px 2px 16px;
+}
+.sort-row {
+  margin-bottom: 10px;
+}
+.catalog-row {
+  padding: 10px 12px;
+}
+.catalog-row__title {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+/* toast icon size */
+.toast__icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+}
+.toast__icon .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+/* sheet close icon */
+.sheet__close .sf-icon {
+  width: var(--icon-3xs);
+  height: var(--icon-3xs);
+}
+
+/* datepicker active feedback */
+.datepicker__item {
+  transition:
+    color 0.12s,
+    font-size 0.12s,
+    background 0.12s;
+  border-radius: var(--radius-md);
+}
+.datepicker__item.is-active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* car form submit spacing */
+.car-form__submit,
+.service-form button[type="submit"] {
+  margin-top: 4px;
+}
+.car-form__delete,
+.service-form__delete {
+  margin-top: 4px;
+}
+
+/* ---------- کاهش انیمیشن ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+  }
+}
+
+/* ---------- دسترسی‌پذیری فوکوس ---------- */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* تنظیمات تم */
+.theme-toggle .segmented__item .sf-icon {
+  color: var(--label-tertiary);
+}
+.theme-toggle .segmented__item.is-active .sf-icon {
+  color: var(--accent);
+}
+
+.theme-toggle .segmented__item:nth-child(1).is-active .sf-icon {
+  color: var(--label-secondary);
+}
+.theme-toggle .segmented__item:nth-child(2).is-active .sf-icon {
+  color: var(--sun-color);
+}
+.theme-toggle .segmented__item:nth-child(3).is-active .sf-icon {
+  color: var(--moon-color);
+}
+
+/* ==================================================
+   نگهداری خودرو — داشبورد و صفحه اختصاصی
+   ================================================== */
+
+.dash-maintenance {
+  margin-top: 16px;
+  margin-inline: 0;
+  margin-bottom: 0;
+  padding: 16px;
+}
+
+.dash-maint__header {
+  margin-bottom: 10px;
+}
+
+.dash-maint__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-maint__title-icon {
+  display: inline-flex;
+}
+
+.dash-maint__title-icon .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.dash-maint__oil {
+  margin-bottom: 4px;
+}
+
+.dash-maint__expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 0 2px;
+  cursor: pointer;
+  color: var(--label-tertiary);
+  border-top: 1px solid var(--separator);
+  margin-top: 10px;
+  transition: color 0.15s ease;
+}
+.dash-maint__expand:active {
+  color: var(--label-secondary);
+}
+.dash-maint__expand-icon {
+  display: inline-flex;
+  transition: transform 0.28s
+    var(--ease-standard, cubic-bezier(0.32, 0.72, 0, 1));
+}
+.dash-maint__expand-icon .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+.dash-maint__expand-icon.is-open {
+  transform: rotate(180deg);
+}
+
+/* انیمیشن باز/بسته شدن قطعات + دکمه مشاهده همه */
+.dash-maint__collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.32s
+      var(--ease-standard, cubic-bezier(0.32, 0.72, 0, 1)),
+    opacity 0.22s ease;
+}
+.dash-maint__collapsible.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.dash-maint__collapsible-inner {
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.dash-maint__others {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-maint__link {
+  margin-top: 2px;
+  text-decoration: none;
+  text-align: center;
+}
+
+/* ظاهر شدن نرم هر نوار هنگام باز شدن */
+.dash-maint__collapsible.is-open .maint-bar {
+  animation: maintBarIn 0.28s var(--ease-standard, ease) both;
+}
+.dash-maint__collapsible.is-open .maint-bar:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.dash-maint__collapsible.is-open .maint-bar:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.dash-maint__collapsible.is-open .maint-bar:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.dash-maint__collapsible.is-open .maint-bar:nth-child(4) {
+  animation-delay: 0.14s;
+}
+.dash-maint__collapsible.is-open .dash-maint__link {
+  animation: maintBarIn 0.28s var(--ease-standard, ease) 0.12s both;
+}
+
+@keyframes maintBarIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-maint__collapsible,
+  .dash-maint__expand-icon {
+    transition: none;
+  }
+  .dash-maint__collapsible.is-open .maint-bar,
+  .dash-maint__collapsible.is-open .dash-maint__link {
+    animation: none;
+  }
+}
+
+/* نوار پیشرفت خطی */
+.maint-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.maint-bar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.maint-bar__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--label-primary);
+}
+
+.maint-bar__pct,
+.maint-bar__meta {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.maint-bar__track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--fill-tertiary);
+  overflow: hidden;
+}
+
+.maint-bar__fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--success);
+  transition: width 0.35s ease;
+  min-width: 0;
+}
+
+.maint-bar--ok .maint-bar__fill {
+  background: var(--success);
+}
+.maint-bar--caution .maint-bar__fill {
+  background: var(--warning);
+}
+.maint-bar--warn .maint-bar__fill {
+  background: var(--danger);
+}
+.maint-bar--critical .maint-bar__fill {
+  background: var(--danger);
+}
+.maint-bar--empty .maint-bar__fill {
+  background: var(--fill-secondary);
+}
+
+.maint-bar--ok .maint-bar__pct {
+  color: var(--success);
+}
+.maint-bar--caution .maint-bar__pct {
+  color: var(--warning);
+}
+.maint-bar--warn .maint-bar__pct {
+  color: var(--danger);
+}
+.maint-bar--critical .maint-bar__pct {
+  color: var(--danger);
+}
+
+.maint-bar__sub {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--label-tertiary);
+}
+
+/* گیج دایره‌ای */
+.maint-gauge-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  margin: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.maint-gauge-card__ring-wrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+
+.maint-gauge-card__svg {
+  width: 88px;
+  height: 88px;
+}
+
+.maint-gauge-card__track {
+  fill: none;
+  stroke: var(--fill-tertiary);
+  stroke-width: 8;
+}
+
+.maint-gauge-card__fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.maint-gauge-card__fill--ok {
+  stroke: var(--success);
+}
+.maint-gauge-card__fill--caution {
+  stroke: var(--warning);
+}
+.maint-gauge-card__fill--warn {
+  stroke: var(--danger);
+}
+.maint-gauge-card__fill--critical {
+  stroke: var(--danger);
+}
+.maint-gauge-card__fill--empty {
+  stroke: var(--fill-secondary);
+}
+
+.maint-gauge-card__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label-primary);
+  pointer-events: none;
+}
+
+.maint-gauge-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.maint-gauge-card__title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label-primary);
+}
+
+.maint-gauge-card__sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--label-secondary);
+}
+
+.maint-gauge-card__meta {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--label-tertiary);
+}
+
+/* کارت آیتم نگهداری */
+.maint-item-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin: 0 16px 12px;
+  overflow: hidden;
+  border: 1px solid var(--separator);
+}
+
+.maint-item-card__actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.maint-item-card__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--label-tertiary);
+  padding: 0 4px 4px;
+}
+
+.maint-page__list {
+  padding-bottom: 24px;
+}
+
+.maint-page__strip {
+  margin-bottom: 8px;
+}
+
+.part-picker-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: right;
+}
+
+.part-picker-row__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label-primary);
+}
+
+.part-picker-row__life {
+  font-size: 12px;
+  color: var(--label-tertiary);
+}
+
+.field__hint {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--label-tertiary);
+}
+
+/* ---------- گالری چند-عکسی (معاینه فنی و موارد مشابه) ---------- */
+.photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  align-items: stretch;
+}
+.photo-gallery__item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--fill-tertiary);
+}
+.photo-gallery__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-gallery__remove {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.photo-gallery__remove .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+.photo-gallery__add {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed color-mix(in srgb, var(--label-tertiary) 55%, transparent);
+  background: var(--fill-tertiary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--label-tertiary);
+  text-align: center;
+  padding: 6px;
+}
+.photo-gallery__add .sf-icon {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+.photo-gallery__add-text {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.photo-gallery__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.photo-gallery__count {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--label-tertiary);
+}
+
+/* ---------- ردیف پرداخت بیمه ---------- */
+.ins-payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ins-payment-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 0;
+  padding: 10px 12px;
+}
+.ins-payment-row .field-row {
+  gap: 8px;
+}
+.ins-payment-row .field {
+  gap: 4px;
+}
+.ins-payment-row .field label {
+  font-size: 11.5px;
+}
+.ins-payment-row .text-input {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.ins-payment-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ins-payment-row__header strong {
+  font-size: 13.5px;
+  color: var(--label-primary);
+}
+.ins-payment-row__header .segmented {
+  flex: 0 0 auto;
+  padding: 2px;
+}
+.ins-payment-add-btn {
+  align-self: stretch;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ---------- کارت وضعیت اسناد خودرو (داشبورد) ---------- */
+.dash-docs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+.dash-doc-card {
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--separator);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dash-doc-card__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--label-secondary);
+}
+.dash-doc-card__header .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.dash-doc-card__status {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.dash-doc-card__status--success { color: var(--success); }
+.dash-doc-card__status--warning { color: var(--warning); }
+.dash-doc-card__status--danger { color: var(--danger); }
+.dash-doc-card__status--neutral { color: var(--label-tertiary); }
+.dash-doc-card__meta {
+  font-size: 11.5px;
+  color: var(--label-tertiary);
+}
+.dash-doc-card__pay-btn {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.dash-doc-card__pay-btn .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+.dash-doc-card__pay-btn:active {
+  transform: scale(0.96);
+}
+.dash-doc-card__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.dash-doc-card__actions > .dash-doc-card__pay-btn,
+.dash-doc-card__actions > .dash-doc-card__status-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  align-self: stretch;
+  white-space: nowrap;
+}
+.dash-doc-card__actions--full > .dash-doc-card__status-btn {
+  flex-basis: 100%;
+}
+.dash-doc-card__status-btn {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--surface-neutral);
+  color: var(--on-surface-neutral);
+  font-weight: 600;
+  font-size: 11.5px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.dash-doc-card__status-btn .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
+
+.ins-payment-row__header {
+  position: relative;
+}
+.ins-payment-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin-inline-start: auto;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--label-tertiary);
+  cursor: pointer;
+}
+.ins-payment-remove:hover,
+.ins-payment-remove:focus-visible {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.ins-payment-remove .sf-icon {
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
+}
