@@ -705,17 +705,27 @@ async function renderDashboardPage(params, root) {
 
     docsSection.innerHTML = `
       <div class="dash-doc-card">
-        <div class="dash-doc-card__header"><span class="sf">${acIcon("car-front-check")}</span><span>معاینه فنی</span></div>
-        <p class="dash-doc-card__status dash-doc-card__status--${inspStatus.cls}">${inspStatus.text}</p>
-        <p class="dash-doc-card__meta">${inspection.expiryDate ? "اعتبار تا " + toFaDigits(inspection.expiryDate) : "معاینه فنی ثبت نشده"}</p>
+        <div class="dash-doc-card__header">
+          <span class="dash-doc-card__header-icon sf">${acIcon("car-front-check")}</span>
+          <span>معاینه فنی</span>
+        </div>
+        <div class="dash-doc-card__body">
+          <span class="dash-doc-card__status dash-doc-card__status--${inspStatus.cls}">${inspStatus.text}</span>
+          <p class="dash-doc-card__meta">${inspection.expiryDate ? "اعتبار تا " + toFaDigits(inspection.expiryDate) : "معاینه فنی ثبت نشده"}</p>
+        </div>
       </div>
       <div class="dash-doc-card">
-        <div class="dash-doc-card__header"><span class="sf">${acIcon("quotation")}</span><span>بیمه‌نامه</span></div>
-        <p class="dash-doc-card__status dash-doc-card__status--${insStatus.cls}">${insStatus.text}</p>
-        <p class="dash-doc-card__meta">${insMetaHTML}</p>
-        <div class="dash-doc-card__actions${payActionHTML ? "" : " dash-doc-card__actions--full"}">
+        <div class="dash-doc-card__header">
+          <span class="dash-doc-card__header-icon sf">${acIcon("quotation")}</span>
+          <span>بیمه‌نامه</span>
+        </div>
+        <div class="dash-doc-card__body">
+          <span class="dash-doc-card__status dash-doc-card__status--${insStatus.cls}">${insStatus.text}</span>
+          <p class="dash-doc-card__meta">${insMetaHTML}</p>
+        </div>
+        <div class="dash-doc-card__actions">
           ${payActionHTML}
-          <button type="button" class="dash-doc-card__status-btn">وضعیت اقساط</button>
+          <button type="button" class="dash-doc-card__status-btn"><span class="sf">${acIcon("quotation")}</span>وضعیت اقساط</button>
         </div>
       </div>
     `;
@@ -1095,11 +1105,15 @@ async function renderCarFormPage(params, root) {
       </div>
 
       <div class="field">
-        <button type="button" class="text-input text-input--button other-spec-trigger" id="inspection-trigger">
-          <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
-          <span class="other-spec-trigger__text">معاینه فنی خودرو (اختیاری)</span>
-          <span class="form-reset-btn sf" role="button" tabindex="0" title="بازنشانی معاینه فنی">${acIcon("trash")}</span>
-        </button>
+        <div class="other-spec-trigger-row">
+          <button type="button" class="text-input text-input--button other-spec-trigger" id="inspection-trigger">
+            <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
+            <span class="other-spec-trigger__text">معاینه فنی خودرو (اختیاری)</span>
+          </button>
+          <button type="button" class="form-reset-btn" id="inspection-reset-btn" title="بازنشانی معاینه فنی" aria-label="بازنشانی معاینه فنی">
+            <span class="sf">${acIcon("trash")}</span>
+          </button>
+        </div>
         <div class="other-spec-panel" id="inspection-panel" hidden>
           <div class="other-spec-panel__inner">
             <div class="field-row">
@@ -1126,11 +1140,15 @@ async function renderCarFormPage(params, root) {
       </div>
 
       <div class="field">
-        <button type="button" class="text-input text-input--button other-spec-trigger" id="insurance-trigger">
-          <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
-          <span class="other-spec-trigger__text">بیمه‌نامه خودرو (اختیاری)</span>
-          <span class="form-reset-btn sf" role="button" tabindex="0" title="بازنشانی بیمه‌نامه">${acIcon("trash")}</span>
-        </button>
+        <div class="other-spec-trigger-row">
+          <button type="button" class="text-input text-input--button other-spec-trigger" id="insurance-trigger">
+            <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
+            <span class="other-spec-trigger__text">بیمه‌نامه خودرو (اختیاری)</span>
+          </button>
+          <button type="button" class="form-reset-btn" id="insurance-reset-btn" title="بازنشانی بیمه‌نامه" aria-label="بازنشانی بیمه‌نامه">
+            <span class="sf">${acIcon("trash")}</span>
+          </button>
+        </div>
         <div class="other-spec-panel" id="insurance-panel" hidden>
           <div class="other-spec-panel__inner">
             <section class="section-block">
@@ -1619,7 +1637,7 @@ async function renderCarFormPage(params, root) {
     }
     toggleCollapsible(inspectionTrigger, inspectionPanel, inspectionOpen);
   });
-  inspectionTrigger.querySelector(".form-reset-btn")?.addEventListener("click", (event) => {
+  root.querySelector("#inspection-reset-btn").addEventListener("click", (event) => {
     event.stopPropagation();
     state.inspection = { date: "", expiryDate: "", notifyBefore: "week1", photos: [] };
     inspectionDateBtn.textContent = "انتخاب تاریخ";
@@ -1634,6 +1652,19 @@ async function renderCarFormPage(params, root) {
         state.inspection.photos = photos;
       },
     }));
+    const notifyMount = root.querySelector(".inspection-notify-combo");
+    notifyMount.innerHTML = "";
+    notifyMount.appendChild(
+      createCombobox({
+        items: INSPECTION_NOTIFY_OPTIONS,
+        value: "week1",
+        placeholder: "زمان اطلاع‌رسانی",
+        searchable: false,
+        onSelect: (item) => {
+          state.inspection.notifyBefore = item.value;
+        },
+      }),
+    );
     inspectionTrigger.classList.remove("is-open");
     inspectionPanel.hidden = true;
   });
@@ -1704,12 +1735,13 @@ async function renderCarFormPage(params, root) {
     }
     toggleCollapsible(insuranceTrigger, insurancePanel, insuranceOpen);
   });
-  insuranceTrigger.querySelector(".form-reset-btn")?.addEventListener("click", (event) => {
+  root.querySelector("#insurance-reset-btn").addEventListener("click", (event) => {
     event.stopPropagation();
     state.insurance = createEmptyInsurance();
     insFromBtn.textContent = "انتخاب تاریخ";
     insToBtn.textContent = "انتخاب تاریخ";
     insuranceToManuallyEdited = false;
+    activeInstallmentCount = 1;
     renderPaymentsList();
   });
   if (insuranceOpen) {
@@ -1747,12 +1779,21 @@ async function renderCarFormPage(params, root) {
   });
 
   const insPaymentsListEl = root.querySelector(".ins-payments-list");
+  // تعداد اقساط فعال به‌صورت صریح نگه‌داری می‌شود (نه استنتاج از داده) تا رفتار
+  // نمایش/افزودن/حذف قسط کاملا قابل پیش‌بینی باشد و با رندرهای دیگر (مثل انتخاب تاریخ) تغییر نکند.
+  let activeInstallmentCount = 1;
+  for (let i = 2; i <= 12; i += 1) {
+    const p = state.insurance.payments[`inst${i}`];
+    if (p && (p.amount || p.date || p.paid)) activeInstallmentCount = i;
+    else break;
+  }
+
   function renderPaymentsList() {
     insPaymentsListEl.innerHTML = "";
-    const paymentRows = INS_PAYMENT_ROWS.filter(({ key }, index) => {
-      if (key === "cash" || key === "inst1") return true;
-      const previous = state.insurance.payments[`inst${index - 1}`];
-      return previous && (previous.amount || previous.date || previous.paid);
+    const paymentRows = INS_PAYMENT_ROWS.filter(({ key }) => {
+      if (key === "cash") return true;
+      const n = Number(key.replace("inst", ""));
+      return n <= activeInstallmentCount;
     });
     paymentRows.forEach(({ key, label }) => {
       const p = state.insurance.payments[key];
@@ -1761,7 +1802,7 @@ async function renderCarFormPage(params, root) {
       card.innerHTML = `
         <div class="ins-payment-row__header">
           <strong>${label}</strong>
-          ${key !== "cash" ? `<button type="button" class="ins-payment-remove sf" aria-label="حذف ${label}" title="حذف ${label}">${acIcon("close")}</button>` : ""}
+          ${key !== "cash" && key !== "inst1" ? `<button type="button" class="ins-payment-remove sf" aria-label="حذف ${label}" title="حذف ${label}">${acIcon("close")}</button>` : ""}
           <div class="ins-payment-status-mount"></div>
         </div>
         <div class="field-row">
@@ -1812,26 +1853,18 @@ async function renderCarFormPage(params, root) {
             : { amount: "", date: "", paid: false };
         }
         state.insurance.payments.inst12 = { amount: "", date: "", paid: false };
+        activeInstallmentCount = Math.max(1, activeInstallmentCount - 1);
         renderPaymentsList();
       });
       insPaymentsListEl.appendChild(card);
     });
-    const nextIndex = paymentRows.length;
-    if (nextIndex < INS_PAYMENT_ROWS.length) {
+    if (activeInstallmentCount < 12) {
       const addButton = document.createElement("button");
       addButton.type = "button";
       addButton.className = "btn btn--secondary ins-payment-add-btn";
       addButton.innerHTML = `<span class="sf">${acIcon("plus")}</span>افزودن قسط`;
       addButton.addEventListener("click", () => {
-        const next = INS_PAYMENT_ROWS[nextIndex];
-        const previous = next.key === "inst2"
-          ? state.insurance.payments.inst1
-          : state.insurance.payments[`inst${nextIndex - 1}`];
-        if (!previous || (!previous.amount && !previous.date && !previous.paid)) {
-          showToast("ابتدا اطلاعات قسط قبلی را وارد کنید", "error");
-          return;
-        }
-        state.insurance.payments[next.key] = { amount: "", date: "", paid: false };
+        activeInstallmentCount = Math.min(12, activeInstallmentCount + 1);
         renderPaymentsList();
       });
       insPaymentsListEl.appendChild(addButton);

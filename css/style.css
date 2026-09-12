@@ -1180,7 +1180,7 @@ img.sf-icon {
 /* ---------- دکمه شناور FAB ---------- */
 .fab {
   position: fixed;
-  left: 16px;
+  left: max(16px, calc(50% - 320px + 16px));
   right: auto;
   bottom: calc(var(--tab-bar-height) + 18px + var(--safe-bottom));
   transform: none;
@@ -1219,11 +1219,18 @@ img.sf-icon {
   bottom: 0;
   right: 0;
   left: 0;
+  max-width: 640px;
+  margin: 0 auto;
   display: flex;
   background: var(--bg-elevated);
   border-top: 1px solid var(--separator);
   padding-bottom: var(--safe-bottom);
   z-index: 30;
+}
+@media (min-width: 640px) {
+  .tab-bar {
+    border-inline: 1px solid var(--separator);
+  }
 }
 .tab-bar__item {
   flex: 1;
@@ -2260,6 +2267,15 @@ img.sf-icon {
 }
 
 /* ---------- مشخصات دیگر (نمایش درون‌خطی با انیمیشن) ---------- */
+.other-spec-trigger-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.other-spec-trigger-row .other-spec-trigger {
+  flex: 1;
+  min-width: 0;
+}
 .other-spec-trigger {
   display: flex;
   align-items: center;
@@ -2278,21 +2294,31 @@ img.sf-icon {
   flex: 1;
   text-align: right;
 }
-.other-spec-trigger .form-reset-btn {
+.form-reset-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  flex-shrink: 0;
+  width: 48px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator);
   color: var(--label-tertiary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
+  padding: 0;
+  transition: color 0.15s, background 0.15s, transform 0.12s;
 }
-.other-spec-trigger .form-reset-btn:hover,
-.other-spec-trigger .form-reset-btn:focus-visible {
+.form-reset-btn .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.form-reset-btn:hover,
+.form-reset-btn:focus-visible {
   color: var(--danger);
   background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.form-reset-btn:active {
+  transform: scale(0.94);
 }
 
 .other-spec-panel {
@@ -3744,8 +3770,8 @@ a:focus-visible {
 
 /* ---------- کارت وضعیت اسناد خودرو (داشبورد) ---------- */
 .dash-docs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-top: 16px;
 }
@@ -3753,48 +3779,72 @@ a:focus-visible {
   border-radius: var(--radius-lg);
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
-  padding: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 .dash-doc-card__header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--label-secondary);
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--label-primary);
 }
-.dash-doc-card__header .sf-icon {
+.dash-doc-card__header-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--fill-tertiary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dash-doc-card__header-icon .sf-icon {
   width: var(--icon-xs);
   height: var(--icon-xs);
 }
-.dash-doc-card__status {
-  font-size: 14.5px;
-  font-weight: 600;
+.dash-doc-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
-.dash-doc-card__status--success { color: var(--success); }
-.dash-doc-card__status--warning { color: var(--warning); }
-.dash-doc-card__status--danger { color: var(--danger); }
-.dash-doc-card__status--neutral { color: var(--label-tertiary); }
+.dash-doc-card__status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.dash-doc-card__status--success { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+.dash-doc-card__status--warning { color: var(--warning); background: color-mix(in srgb, var(--warning) 14%, transparent); }
+.dash-doc-card__status--danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.dash-doc-card__status--neutral { color: var(--label-tertiary); background: var(--fill-tertiary); }
 .dash-doc-card__meta {
-  font-size: 11.5px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.6;
   color: var(--label-tertiary);
 }
 .dash-doc-card__pay-btn {
-  margin-top: 4px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  align-self: flex-start;
   border: none;
   border-radius: var(--radius-pill);
   background: var(--surface-neutral);
   color: var(--on-surface-neutral);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 8px 14px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .dash-doc-card__pay-btn .sf-icon {
   width: var(--icon-2xs);
@@ -3805,39 +3855,31 @@ a:focus-visible {
 }
 .dash-doc-card__actions {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-top: 2px;
 }
-.dash-doc-card__actions > .dash-doc-card__pay-btn,
-.dash-doc-card__actions > .dash-doc-card__status-btn {
-  flex: 1 1 0;
-  min-width: 0;
-  align-self: stretch;
-  white-space: nowrap;
-}
-.dash-doc-card__actions--full > .dash-doc-card__status-btn {
-  flex-basis: 100%;
-}
 .dash-doc-card__status-btn {
-  margin-top: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  border: none;
+  border: 1px solid var(--separator);
   border-radius: var(--radius-pill);
-  background: var(--surface-neutral);
-  color: var(--on-surface-neutral);
+  background: transparent;
+  color: var(--label-primary);
   font-weight: 600;
-  font-size: 11.5px;
-  padding: 6px 12px;
+  font-size: 12px;
+  padding: 8px 14px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .dash-doc-card__status-btn .sf-icon {
   width: var(--icon-2xs);
   height: var(--icon-2xs);
+}
+.dash-doc-card__status-btn:active {
+  transform: scale(0.96);
 }
 
 .ins-payment-row__header {
