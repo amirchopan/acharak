@@ -951,7 +951,7 @@ async function renderCarsListPage(params, root) {
   if (!cars.length) {
     list.innerHTML = `
       <div class="empty-state">
-        <span class="empty-state__icon sf">${acIcon("car")}</span>
+        <span class="empty-state__icon sf">${acIcon("car-front")}</span>
         <h2>خودرویی ثبت نشده</h2>
         <p>با دکمه شناور پایین صفحه، اولین خودروی خود را اضافه کنید.</p>
       </div>`;
