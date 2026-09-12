@@ -3770,31 +3770,31 @@ a:focus-visible {
 
 /* ---------- کارت وضعیت اسناد خودرو (داشبورد) ---------- */
 .dash-docs {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 .dash-doc-card {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--bg-elevated);
   border: 1px solid var(--separator);
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
 }
 .dash-doc-card__header {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--label-primary);
 }
 .dash-doc-card__header-icon {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--fill-tertiary);
@@ -3810,26 +3810,23 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 3px;
 }
 .dash-doc-card__status {
-  display: inline-flex;
-  align-items: center;
-  font-size: 12.5px;
+  display: inline-block;
+  font-size: 13px;
   font-weight: 600;
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
-.dash-doc-card__status--success { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
-.dash-doc-card__status--warning { color: var(--warning); background: color-mix(in srgb, var(--warning) 14%, transparent); }
-.dash-doc-card__status--danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
-.dash-doc-card__status--neutral { color: var(--label-tertiary); background: var(--fill-tertiary); }
+.dash-doc-card__status--success { color: var(--success); }
+.dash-doc-card__status--warning { color: var(--warning); }
+.dash-doc-card__status--danger { color: var(--danger); }
+.dash-doc-card__status--neutral { color: var(--label-tertiary); }
 .dash-doc-card__meta {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.45;
   color: var(--label-tertiary);
 }
 .dash-doc-card__pay-btn {
@@ -3840,9 +3837,9 @@ a:focus-visible {
   border-radius: var(--radius-pill);
   background: var(--surface-neutral);
   color: var(--on-surface-neutral);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 8px 14px;
+  padding: 6px 9px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -3856,8 +3853,8 @@ a:focus-visible {
 .dash-doc-card__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 2px;
+  gap: 5px;
+  margin-top: 1px;
 }
 .dash-doc-card__status-btn {
   display: inline-flex;
@@ -3869,8 +3866,8 @@ a:focus-visible {
   background: transparent;
   color: var(--label-primary);
   font-weight: 600;
-  font-size: 12px;
-  padding: 8px 14px;
+  font-size: 11px;
+  padding: 6px 9px;
   cursor: pointer;
   white-space: nowrap;
 }
