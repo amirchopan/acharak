@@ -26,6 +26,8 @@ import {
   createIranPlateWidget,
   createCarCard,
   createServiceCard,
+  createServiceCompactRow,
+  createServiceTimelineItem,
   openServiceReceipt,
   openInsuranceReceipt,
   renderTabBar,
@@ -512,6 +514,12 @@ async function renderDashboardPage(params, root) {
   const recentList = root.querySelector(".dash-recent__list");
   let maintExpanded = false;
 
+  function dashboardCarModel(car) {
+    if (car.model) return car.model;
+    const brandModel = String(car.brandModel || "");
+    return brandModel.includes(" - ") ? brandModel.split(" - ").slice(1).join(" - ") : brandModel;
+  }
+
   function renderStrip() {
     strip.innerHTML = "";
     cars.forEach((car) => {
@@ -520,7 +528,7 @@ async function renderDashboardPage(params, root) {
       chip.className =
         "dash-car-chip" + (car.id === activeCarId ? " is-active" : "");
       chip.innerHTML = `
-        <span class="dash-car-chip__name">${escapeHtml(car.brandModel || "خودرو")}</span>`;
+        <span class="dash-car-chip__name">${escapeHtml(dashboardCarModel(car) || "خودرو")}</span>`;
       chip.addEventListener("click", () => {
         activeCarId = car.id;
         window.__dashboardActiveCarId = car.id;
@@ -614,7 +622,7 @@ async function renderDashboardPage(params, root) {
       }
       <div class="dash-summary__content">
         <div class="dash-summary__title-block">
-          <h2 class="dash-summary__car-name">${escapeHtml(car.brandModel || "خودرو")}</h2>
+          <h2 class="dash-summary__car-name">${escapeHtml(dashboardCarModel(car) || "خودرو")}</h2>
           <div class="dash-summary__update-actions">
             <button type="button" class="btn btn--secondary btn--small dash-summary__update-btn"><span class="sf">${acIcon("refresh")}</span> به‌روزرسانی کیلومتر</button>
           </div>
@@ -664,11 +672,18 @@ async function renderDashboardPage(params, root) {
   /** یافتن اولین قسط پرداخت‌نشده‌ای که مبلغ یا تاریخ برایش ثبت شده */
   function findNextDuePayment(insurance) {
     const payments = insurance.payments || {};
-    for (const row of INS_PAYMENT_ROWS) {
-      const p = payments[row.key];
-      if (!p) continue;
-      const hasData = p.amount || p.date;
-      if (hasData && !p.paid) return { key: row.key, label: row.label, ...p };
+    const cashPayment = payments.cash;
+    if (cashPayment && (cashPayment.amount || cashPayment.date) && !cashPayment.paid) {
+      return { key: "cash", label: "نقد", ...cashPayment };
+    }
+    for (let index = 1; index <= 12; index += 1) {
+      const p = payments[`inst${index}`];
+      if (!p) break;
+      const hasData = p.amount || p.date || p.paid;
+      if (!hasData) break;
+      if (!p.paid) {
+        return { key: `inst${index}`, label: `قسط ${toFaDigits(index)}`, ...p };
+      }
     }
     return null;
   }
@@ -698,7 +713,7 @@ async function renderDashboardPage(params, root) {
       } else {
         insMetaHTML += ` · ${nextDue.label} · ${amountText} · ${toFaDigits(dueDays)} روز مانده`;
       }
-      payActionHTML = `<button type="button" class="dash-doc-card__pay-btn" data-pay-key="${nextDue.key}"><span class="sf">${acIcon("checkmark")}</span>ثبت پرداخت ${nextDue.label}</button>`;
+      payActionHTML = `<button type="button" class="dash-doc-card__pay-btn" data-pay-key="${nextDue.key}" aria-label="ثبت پرداخت ${nextDue.label}"><span class="sf">${acIcon("checkmark")}</span><span class="dash-doc-card__action-label">ثبت پرداخت ${nextDue.label}</span></button>`;
     } else if (insurance.toDate) {
       insMetaHTML += " · همه اقساط پرداخت شده";
     }
@@ -717,15 +732,15 @@ async function renderDashboardPage(params, root) {
       <div class="dash-doc-card">
         <div class="dash-doc-card__header">
           <span class="dash-doc-card__header-icon sf">${acIcon("quotation")}</span>
-          <span>بیمه‌نامه</span>
+          <span class="dash-doc-card__header-title">بیمه‌نامه</span>
+          <div class="dash-doc-card__actions">
+            ${payActionHTML}
+            <button type="button" class="dash-doc-card__status-btn" aria-label="وضعیت اقساط"><span class="sf">${acIcon("quotation")}</span><span class="dash-doc-card__action-label">وضعیت اقساط</span></button>
+          </div>
         </div>
         <div class="dash-doc-card__body">
           <span class="dash-doc-card__status dash-doc-card__status--${insStatus.cls}">${insStatus.text}</span>
           <p class="dash-doc-card__meta">${insMetaHTML}</p>
-        </div>
-        <div class="dash-doc-card__actions">
-          ${payActionHTML}
-          <button type="button" class="dash-doc-card__status-btn"><span class="sf">${acIcon("quotation")}</span>وضعیت اقساط</button>
         </div>
       </div>
     `;
@@ -735,6 +750,13 @@ async function renderDashboardPage(params, root) {
       payBtn.addEventListener("click", async () => {
         const key = payBtn.getAttribute("data-pay-key");
         if (car.insurance && car.insurance.payments && car.insurance.payments[key]) {
+          const confirmed = await showAlert({
+            title: "تایید پرداخت",
+            message: `آیا از ثبت پرداخت ${nextDue.label} مطمئن هستید؟`,
+            confirmText: "ثبت پرداخت",
+            cancelText: "انصراف",
+          });
+          if (!confirmed) return;
           car.insurance.payments[key].paid = true;
           await CarsAPI.save(car);
           showToast("پرداخت ثبت شد", "success");
@@ -895,12 +917,12 @@ async function renderDashboardPage(params, root) {
   function renderQuickButtons() {
     quickButtons.innerHTML = `
       <button type="button" class="quick-action-btn" id="quick-new-service-btn">
-        <span class="quick-action-btn__icon sf">${acIcon("plus")}</span>
+        <span class="quick-action-btn__icon sf">${acIcon("wrench-add")}</span>
         <span>سرویس جدید</span>
       </button>
       <button type="button" class="quick-action-btn" id="quick-search-service-btn">
-        <span class="quick-action-btn__icon sf">${acIcon("wrench")}</span>
-        <span>همه سرویس‌ها</span>
+        <span class="quick-action-btn__icon sf">${acIcon("car-front-add")}</span>
+        <span>خودرو جدید</span>
       </button>
     `;
     quickButtons
@@ -1741,7 +1763,7 @@ async function renderCarFormPage(params, root) {
     insFromBtn.textContent = "انتخاب تاریخ";
     insToBtn.textContent = "انتخاب تاریخ";
     insuranceToManuallyEdited = false;
-    activeInstallmentCount = 1;
+    activeInstallmentCount = 0;
     renderPaymentsList();
   });
   if (insuranceOpen) {
@@ -1781,8 +1803,8 @@ async function renderCarFormPage(params, root) {
   const insPaymentsListEl = root.querySelector(".ins-payments-list");
   // تعداد اقساط فعال به‌صورت صریح نگه‌داری می‌شود (نه استنتاج از داده) تا رفتار
   // نمایش/افزودن/حذف قسط کاملا قابل پیش‌بینی باشد و با رندرهای دیگر (مثل انتخاب تاریخ) تغییر نکند.
-  let activeInstallmentCount = 1;
-  for (let i = 2; i <= 12; i += 1) {
+  let activeInstallmentCount = 0;
+  for (let i = 1; i <= 12; i += 1) {
     const p = state.insurance.payments[`inst${i}`];
     if (p && (p.amount || p.date || p.paid)) activeInstallmentCount = i;
     else break;
@@ -1799,10 +1821,12 @@ async function renderCarFormPage(params, root) {
       const p = state.insurance.payments[key];
       const card = document.createElement("div");
       card.className = "mini-card ins-payment-row";
+      const canRemove = key !== "cash";
+      if (canRemove) card.classList.add("ins-payment-row--removable");
       card.innerHTML = `
+        ${canRemove ? `<button type="button" class="ins-payment-remove" aria-label="حذف ${label}" title="حذف ${label}"><span class="sf">${acIcon("close")}</span></button>` : ""}
         <div class="ins-payment-row__header">
           <strong>${label}</strong>
-          ${key !== "cash" && key !== "inst1" ? `<button type="button" class="ins-payment-remove sf" aria-label="حذف ${label}" title="حذف ${label}">${acIcon("close")}</button>` : ""}
           <div class="ins-payment-status-mount"></div>
         </div>
         <div class="field-row">
@@ -1830,20 +1854,23 @@ async function renderCarFormPage(params, root) {
         });
       });
       const statusMount = card.querySelector(".ins-payment-status-mount");
-      const segEl = createSegmentedControl(
-        [
-          { label: "پرداخت نشده", value: false },
-          { label: "پرداخت شده", value: true },
-        ],
-        p.paid,
-        (val) => {
-          p.paid = val;
-          segEl.classList.toggle("segmented--paid", val === true);
-        },
-      );
-      segEl.classList.add("segmented--payment-status");
-      segEl.classList.toggle("segmented--paid", p.paid === true);
-      statusMount.appendChild(segEl);
+      const statusButton = document.createElement("button");
+      statusButton.type = "button";
+      statusButton.className = "ins-payment-status";
+      statusButton.addEventListener("click", () => {
+        p.paid = !p.paid;
+        updatePaymentStatus();
+      });
+      statusMount.appendChild(statusButton);
+
+      function updatePaymentStatus() {
+        statusButton.classList.toggle("is-paid", p.paid === true);
+        statusButton.setAttribute("aria-pressed", String(p.paid === true));
+        statusButton.innerHTML = p.paid === true
+          ? `پرداخت شده`
+          : "پرداخت نشده";
+      }
+      updatePaymentStatus();
       card.querySelector(".ins-payment-remove")?.addEventListener("click", () => {
         const removedIndex = Number(key.replace("inst", ""));
         for (let index = removedIndex; index < 12; index += 1) {
@@ -1853,7 +1880,7 @@ async function renderCarFormPage(params, root) {
             : { amount: "", date: "", paid: false };
         }
         state.insurance.payments.inst12 = { amount: "", date: "", paid: false };
-        activeInstallmentCount = Math.max(1, activeInstallmentCount - 1);
+        activeInstallmentCount = Math.max(0, activeInstallmentCount - 1);
         renderPaymentsList();
       });
       insPaymentsListEl.appendChild(card);
@@ -1974,8 +2001,9 @@ async function renderServicesListPage(params, root) {
   ]);
   const carsById = Object.fromEntries(cars.map((c) => [c.id, c]));
 
-  const filterState = { carId: "", title: "", dateRange: "", customDate: "" };
+  const filterState = { carId: "", title: "", dateRange: "", customDate: "", oilOnly: false };
   let sortBy = "جدیدترین";
+  let viewMode = "card"; // card | timeline | compact
 
   root.innerHTML = `
     <header class="page-header">
@@ -1987,7 +2015,10 @@ async function renderServicesListPage(params, root) {
       <input type="text" class="search-row__input" id="service-search-input" placeholder="جستجو در عنوان سرویس…" value="${escapeHtml(filterState.title)}" />
       <button type="button" class="search-row__filter-btn sf" id="open-search-btn" aria-label="تنظیمات جستجو">${acIcon("filter-settings")}</button>
     </div>
-    <div class="sort-row"></div>
+    <div class="list-controls-row">
+      <div class="sort-combo"></div>
+      <div class="view-combo"></div>
+    </div>
     <div class="active-filters"></div>
     <div class="service-list"></div>
   `;
@@ -1998,20 +2029,48 @@ async function renderServicesListPage(params, root) {
     renderList();
   });
 
-  const sortRow = root.querySelector(".sort-row");
+  const sortCombo = root.querySelector(".sort-combo");
+  const viewCombo = root.querySelector(".view-combo");
   const list = root.querySelector(".service-list");
   const activeFiltersEl = root.querySelector(".active-filters");
 
-  sortRow.appendChild(
-    createSegmentedControl(SORT_OPTIONS, sortBy, (val) => {
-      sortBy = val;
-      renderList();
+  const VIEW_MODE_OPTIONS = [
+    { value: "card", label: "نمای کارت" },
+    { value: "timeline", label: "نمای تایم‌لاین" },
+    { value: "compact", label: "نمای فشرده" },
+  ];
+
+  sortCombo.appendChild(
+    createCombobox({
+      items: SORT_OPTIONS.map((s) => ({ value: s, label: s })),
+      value: sortBy,
+      placeholder: "مرتب‌سازی",
+      searchable: false,
+      onSelect: (item) => {
+        sortBy = item.value;
+        renderList();
+      },
+    }),
+  );
+
+  viewCombo.appendChild(
+    createCombobox({
+      items: VIEW_MODE_OPTIONS,
+      value: viewMode,
+      placeholder: "نمای نمایش",
+      searchable: false,
+      onSelect: (item) => {
+        viewMode = item.value;
+        list.classList.toggle("service-list--timeline", item.value === "timeline");
+        renderList();
+      },
     }),
   );
 
   function applyFilters(items) {
     return items.filter((s) => {
       if (filterState.carId && s.carId !== filterState.carId) return false;
+      if (filterState.oilOnly && !(s.oilChange && s.oilChange.done)) return false;
       if (filterState.title && !(s.title || "").includes(filterState.title))
         return false;
       if (filterState.dateRange) {
@@ -2069,6 +2128,7 @@ async function renderServicesListPage(params, root) {
     if (filterState.title) chips.push(["عنوان: " + filterState.title, "title"]);
     if (filterState.dateRange)
       chips.push(["تاریخ: " + filterState.dateRange, "dateRange"]);
+    if (filterState.oilOnly) chips.push(["فقط تعویض روغن", "oilOnly"]);
     activeFiltersEl.innerHTML = "";
     chips.forEach(([label, key]) => {
       const chip = document.createElement("button");
@@ -2076,7 +2136,7 @@ async function renderServicesListPage(params, root) {
       chip.className = "pill pill--removable";
       chip.innerHTML = `${escapeHtml(label)} <span class="sf">${acIcon("close")}</span>`;
       chip.addEventListener("click", () => {
-        filterState[key] = "";
+        filterState[key] = key === "oilOnly" ? false : "";
         if (key === "dateRange") filterState.customDate = "";
         renderActiveFilters();
         renderList();
@@ -2099,11 +2159,14 @@ async function renderServicesListPage(params, root) {
     }
     filtered.forEach((s) => {
       const car = carsById[s.carId];
-      list.appendChild(
-        createServiceCard(s, car, openServiceReceipt, () =>
-          navigate(`#/services/${s.id}/edit`),
-        ),
-      );
+      const onClick = () => navigate(`#/services/${s.id}/edit`);
+      if (viewMode === "timeline") {
+        list.appendChild(createServiceTimelineItem(s, car, onClick));
+      } else if (viewMode === "compact") {
+        list.appendChild(createServiceCompactRow(s, car, onClick));
+      } else {
+        list.appendChild(createServiceCard(s, car, openServiceReceipt, onClick));
+      }
     });
   }
 
@@ -2115,6 +2178,7 @@ async function renderServicesListPage(params, root) {
       <div class="field"><label>خودرو</label><div class="adv-car-combo"></div></div>
       <div class="field"><label>بازه تاریخ سرویس</label><div class="adv-date-combo"></div></div>
       <div class="field adv-custom-date-field" style="display:none"><label>تاریخ مشخص</label><button type="button" class="text-input text-input--button adv-custom-date-btn">انتخاب تاریخ</button></div>
+      <div class="field"><label>فقط سرویس‌های دارای تعویض روغن</label><div class="adv-oil-toggle"></div></div>
       <button type="button" class="btn btn--primary btn--block" id="adv-apply-btn">اعمال فیلتر</button>
     `;
     sheet.body.appendChild(form);
@@ -2159,6 +2223,18 @@ async function renderServicesListPage(params, root) {
         },
       });
     });
+    form.querySelector(".adv-oil-toggle").appendChild(
+      createSegmentedControl(
+        [
+          { label: "همه", value: false },
+          { label: "فقط تعویض روغن", value: true },
+        ],
+        filterState.oilOnly,
+        (val) => {
+          filterState.oilOnly = val;
+        },
+      ),
+    );
     form.querySelector("#adv-apply-btn").addEventListener("click", () => {
       sheet.close();
       renderActiveFilters();
@@ -2167,7 +2243,7 @@ async function renderServicesListPage(params, root) {
   });
 
   renderList();
-  renderFab("ثبت سرویس", () => navigate("#/services/new"));
+  renderFab("سرویس", () => navigate("#/services/new"));
 }
 
 /* ==================================================

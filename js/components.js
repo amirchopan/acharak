@@ -295,6 +295,151 @@ function openJalaliDatePicker({ value, onSelect }) {
 
 /* ==================== انتخابگر تصویر حرفه‌ای ==================== */
 
+const CAR_PHOTO_CROP_RATIO = 16 / 9;
+
+function readImageSource(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => resolve({ image, source: reader.result });
+      image.onerror = reject;
+      image.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function openCarPhotoCropper(file, onApply) {
+  readImageSource(file).then(({ image, source }) => {
+    let cleanup = () => {};
+    const sheet = openSheet({
+      title: "تنظیم تصویر خودرو",
+      size: "default",
+      onClose: () => cleanup(),
+    });
+    const editor = document.createElement("div");
+    editor.className = "photo-cropper";
+    editor.innerHTML = `
+      <div class="photo-cropper__frame">
+        <img class="photo-cropper__image" src="${source}" alt="" draggable="false" />
+      </div>
+      <div class="photo-cropper__controls">
+        <label class="photo-cropper__zoom-label" for="photo-cropper-zoom">بزرگ‌نمایی</label>
+        <input id="photo-cropper-zoom" class="photo-cropper__zoom" type="range" min="1" max="3" step="0.01" value="1" />
+      </div>
+      <p class="photo-cropper__hint">تصویر را بکشید تا کادر جابه‌جا شود</p>
+      <button type="button" class="btn btn--primary btn--block photo-cropper__apply">اعمال تصویر</button>
+    `;
+    sheet.body.appendChild(editor);
+
+    const frame = editor.querySelector(".photo-cropper__frame");
+    const imageEl = editor.querySelector(".photo-cropper__image");
+    const zoomInput = editor.querySelector(".photo-cropper__zoom");
+    const frameWidth = frame.clientWidth;
+    const frameHeight = frame.clientHeight;
+    const imageRatio = image.naturalWidth / image.naturalHeight;
+    const baseWidth = Math.max(frameWidth, frameHeight * imageRatio);
+    const baseHeight = baseWidth / imageRatio;
+    let zoom = 1;
+    let offsetX = (frameWidth - baseWidth) / 2;
+    let offsetY = (frameHeight - baseHeight) / 2;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startOffsetX = 0;
+    let startOffsetY = 0;
+
+    function clampOffsets() {
+      const width = baseWidth * zoom;
+      const height = baseHeight * zoom;
+      offsetX = Math.min(0, Math.max(frameWidth - width, offsetX));
+      offsetY = Math.min(0, Math.max(frameHeight - height, offsetY));
+    }
+
+    function renderImage() {
+      clampOffsets();
+      imageEl.style.width = `${baseWidth}px`;
+      imageEl.style.height = `${baseHeight}px`;
+      imageEl.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`;
+    }
+
+    function pointFromEvent(event) {
+      return event.touches ? event.touches[0] : event;
+    }
+
+    function startDrag(event) {
+      event.preventDefault();
+      const point = pointFromEvent(event);
+      dragging = true;
+      startX = point.clientX;
+      startY = point.clientY;
+      startOffsetX = offsetX;
+      startOffsetY = offsetY;
+      frame.classList.add("is-dragging");
+    }
+
+    function moveDrag(event) {
+      if (!dragging) return;
+      const point = pointFromEvent(event);
+      offsetX = startOffsetX + point.clientX - startX;
+      offsetY = startOffsetY + point.clientY - startY;
+      renderImage();
+    }
+
+    function endDrag() {
+      dragging = false;
+      frame.classList.remove("is-dragging");
+    }
+
+    zoomInput.addEventListener("input", () => {
+      const oldZoom = zoom;
+      zoom = Number(zoomInput.value);
+      const centerX = frameWidth / 2;
+      const centerY = frameHeight / 2;
+      offsetX = centerX - (centerX - offsetX) * (zoom / oldZoom);
+      offsetY = centerY - (centerY - offsetY) * (zoom / oldZoom);
+      renderImage();
+    });
+    frame.addEventListener("mousedown", startDrag);
+    frame.addEventListener("touchstart", startDrag, { passive: false });
+    window.addEventListener("mousemove", moveDrag);
+    window.addEventListener("touchmove", moveDrag, { passive: false });
+    window.addEventListener("mouseup", endDrag);
+    window.addEventListener("touchend", endDrag);
+    editor.querySelector(".photo-cropper__apply").addEventListener("click", () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1280;
+      canvas.height = Math.round(canvas.width / CAR_PHOTO_CROP_RATIO);
+      const context = canvas.getContext("2d");
+      const sourceScale = baseWidth / image.naturalWidth;
+      const sourceScaleY = baseHeight / image.naturalHeight;
+      context.drawImage(
+        image,
+        -offsetX / (sourceScale * zoom),
+        -offsetY / (sourceScaleY * zoom),
+        frameWidth / (sourceScale * zoom),
+        frameHeight / (sourceScaleY * zoom),
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+      onApply(canvas.toDataURL("image/jpeg", 0.84));
+      cleanup();
+      sheet.close();
+    });
+    cleanup = () => {
+      window.removeEventListener("mousemove", moveDrag);
+      window.removeEventListener("touchmove", moveDrag);
+      window.removeEventListener("mouseup", endDrag);
+      window.removeEventListener("touchend", endDrag);
+    };
+    renderImage();
+  }).catch(() => showToast("خطا در بارگذاری تصویر", "error"));
+}
+
 /**
  * ساخت یک باکس حرفه‌ای انتخاب تصویر با پیش‌نمایش و امکان حذف/لغو تصویر انتخابی
  * value: dataURL فعلی یا null | placeholderIcon: نام آیکن هنگام نبود تصویر
@@ -352,9 +497,10 @@ function createPhotoPicker({ value = null, placeholderIcon = "photo", onChange }
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       try {
-        const dataUrl = await readImageAsDataURL(file, 800, 0.82);
-        onChange(dataUrl);
-        render(dataUrl);
+        openCarPhotoCropper(file, (dataUrl) => {
+          onChange(dataUrl);
+          render(dataUrl);
+        });
       } catch (_) {
         showToast("خطا در بارگذاری تصویر", "error");
       }
@@ -380,9 +526,10 @@ function createPhotoPicker({ value = null, placeholderIcon = "photo", onChange }
     const file = e.dataTransfer?.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     try {
-      const dataUrl = await readImageAsDataURL(file, 800, 0.82);
-      onChange(dataUrl);
-      render(dataUrl);
+      openCarPhotoCropper(file, (dataUrl) => {
+        onChange(dataUrl);
+        render(dataUrl);
+      });
     } catch (_) {
       showToast("خطا در بارگذاری تصویر", "error");
     }
@@ -753,6 +900,61 @@ function createServiceCard(service, car, onPreview, onClick) {
   return card;
 }
 
+/** ردیف فشرده یک سرویس (برای نمای «فشرده») */
+function createServiceCompactRow(service, car, onClick) {
+  const row = document.createElement('button');
+  row.type = 'button';
+  row.className = 'mini-card svc-compact-row';
+  const hasOilChange = !!(service.oilChange && service.oilChange.done);
+  row.innerHTML = `
+    ${hasOilChange ? `<span class="svc-compact-row__oil-dot sf" title="تعویض روغن">${acIcon('engine-oil')}</span>` : '<span class="svc-compact-row__oil-dot svc-compact-row__oil-dot--empty"></span>'}
+    <div class="mini-card__info">
+      <p class="mini-card__title">${escapeHtml(car ? car.brandModel : 'خودرو حذف‌شده')}</p>
+      <p class="mini-card__sub">${toFaDigits(service.date || '')} · ${formatKm(service.km)}</p>
+    </div>
+    <span class="svc-compact-row__cost">${formatToman(service.totalCost)}</span>
+  `;
+  row.addEventListener('click', onClick);
+  return row;
+}
+
+/** آیتم نمای تایم‌لاین یک سرویس */
+function createServiceTimelineItem(service, car, onClick) {
+  const item = document.createElement('button');
+  item.type = 'button';
+  item.className = 'svc-timeline__item';
+  const items = service.serviceItems || [];
+  const hasOilChange = !!(service.oilChange && service.oilChange.done);
+  const pills = items
+    .slice(0, hasOilChange ? 2 : 3)
+    .map((i) => `<span class="pill">${escapeHtml(i.title)}</span>`)
+    .join('');
+  const oilPill = hasOilChange
+    ? `<span class="pill pill--oil"><span class="sf pill--oil__icon">${acIcon('engine-oil')}</span>تعویض روغن</span>`
+    : '';
+  item.innerHTML = `
+    <div class="svc-timeline__marker">
+      <span class="svc-timeline__dot"></span>
+      <span class="svc-timeline__line"></span>
+    </div>
+    <div class="svc-timeline__content">
+      <div class="svc-timeline__date">${toFaDigits(service.date || '')}</div>
+      <div class="svc-timeline__card">
+        <div class="svc-timeline__row">
+          <strong>${escapeHtml(car ? car.brandModel : 'خودرو حذف‌شده')}</strong>
+          <span>${formatToman(service.totalCost)}</span>
+        </div>
+        <div class="svc-timeline__row svc-timeline__row--meta">
+          <span>${formatKm(service.km)}</span>
+        </div>
+        ${oilPill || pills ? `<div class="svc-timeline__pills">${oilPill}${pills}</div>` : ''}
+      </div>
+    </div>
+  `;
+  item.addEventListener('click', onClick);
+  return item;
+}
+
 /** نمایش فاکتور بانکی ساده از خدمات یک سرویس */
 /** ساخت تصویر PNG از داده‌های صورتحساب (بدون وابستگی خارجی) */
 function isAppDarkTheme() {
@@ -1002,13 +1204,22 @@ function openServiceReceipt(service, car) {
 
 function openInsuranceReceipt(car) {
   const insurance = car.insurance || {};
-  const payments = Object.entries(insurance.payments || {})
-    .filter(([, payment]) => payment && (payment.amount || payment.date || payment.paid))
-    .map(([key, payment]) => [
-      key === "cash" ? "نقد" : `قسط ${toFaDigits(key.replace("inst", ""))}`,
-      payment.paid ? "پرداخت شده" : payment.date ? `سررسید ${toFaDigits(payment.date)}` : "پرداخت نشده",
-      payment.amount,
-    ]);
+  const paymentData = insurance.payments || {};
+  const paymentEntries = [];
+  const cashPayment = paymentData.cash;
+  if (cashPayment && (cashPayment.amount || cashPayment.date || cashPayment.paid)) {
+    paymentEntries.push(["نقد", cashPayment]);
+  }
+  for (let index = 1; index <= 12; index += 1) {
+    const payment = paymentData[`inst${index}`];
+    if (!payment || !(payment.amount || payment.date || payment.paid)) break;
+    paymentEntries.push([`قسط ${toFaDigits(index)}`, payment]);
+  }
+  const payments = paymentEntries.map(([title, payment]) => [
+    title,
+    payment.paid ? "پرداخت شده" : payment.date ? `سررسید ${toFaDigits(payment.date)}` : "پرداخت نشده",
+    payment.amount,
+  ]);
   const total = payments.reduce((sum, [, , amount]) => sum + (Number(amount) || 0), 0);
   const service = { date: insurance.fromDate || "", km: "", totalCost: total };
   const sheet = openSheet({ title: "وضعیت اقساط بیمه", size: "default" });
@@ -1056,13 +1267,13 @@ function renderTabBar(activeRoute) {
   if (!el) {
     el = document.createElement('nav');
     el.id = 'tab-bar';
-    el.className = 'tab-bar';
+    el.className = 'dock';
     document.body.appendChild(el);
   }
   el.innerHTML = tabs.map((t) => `
-    <a href="${t.route}" class="tab-bar__item${activeRoute === t.route ? ' is-active' : ''}">
-      <span class="tab-bar__icon sf">${acIcon(t.icon)}</span>
-      <span class="tab-bar__label">${t.label}</span>
+    <a href="${t.route}" class="dock__item${activeRoute === t.route ? ' is-active' : ''}" aria-label="${escapeHtml(t.label)}">
+      <span class="dock__icon sf">${acIcon(t.icon)}</span>
+      <span class="dock__label">${escapeHtml(t.label)}</span>
     </a>`).join('');
 }
 
@@ -1089,4 +1300,5 @@ export {
   showToast, showAlert, openSheet, createSegmentedControl, createCombobox,
   openJalaliDatePicker, createIranPlateWidget, createIranPlateDisplay, createCarCard, createServiceCard,
   openServiceReceipt, openInsuranceReceipt, renderTabBar, renderFab, removeFab, createPhotoPicker, createPhotoGallery,
+  createServiceCompactRow, createServiceTimelineItem,
 };
