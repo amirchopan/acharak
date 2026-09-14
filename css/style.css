@@ -2027,11 +2027,9 @@ img.sf-icon {
 
 /* تم تاریک: پلاک همیشه سفید واقعی بماند */
 :root.theme-dark .iran-plate,
-@media (prefers-color-scheme: dark) {
-  :root:not(.theme-light) .iran-plate {
-    background: #fff;
-    color: #111;
-  }
+:root:not(.theme-light) .iran-plate {
+  background: #fff;
+  color: #111;
 }
 
 .plate-letter-grid {
@@ -2176,12 +2174,9 @@ img.sf-icon {
 
 /* تم تاریک: پلاک سفید واقعی بماند */
 :root.theme-dark .plate-view,
-@media (prefers-color-scheme: dark) {
-  :root:not(.theme-light) .plate-view {
-    /* background: #fff; */
-    color: #111;
-    border-color: #1a1a1a;
-  }
+:root:not(.theme-light) .plate-view {
+  color: #111;
+  border-color: #1a1a1a;
 }
 
 .iran-plate-display__empty {
@@ -2368,7 +2363,32 @@ img.sf-icon {
 .form-reset-btn:active {
   transform: scale(0.94);
 }
-
+.form-status-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator);
+  color: var(--label-tertiary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s, background 0.15s, transform 0.12s;
+}
+.form-status-btn .sf-icon {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.form-status-btn:hover,
+.form-status-btn:focus-visible {
+  color: #0088ff;
+  background: color-mix(in srgb, #0088ff 12%, transparent);
+}
+.form-status-btn:active {
+  transform: scale(0.94);
+}
 .other-spec-panel {
   display: grid;
   grid-template-rows: 0fr;
@@ -3831,10 +3851,13 @@ a:focus-visible {
   gap: 10px;
   margin-top: 12px;
 }
+.dash-docs--balanced {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
 .dash-doc-card {
   min-width: 0;
-  border-radius: var(--radius-md);
-  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
   border: 1px solid var(--separator);
   padding: 12px;
   display: flex;
@@ -3844,11 +3867,19 @@ a:focus-visible {
 .dash-doc-card__header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
   min-width: 0;
+  min-height: 30px;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--label-primary);
+}
+.dash-doc-card__header-title-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 .dash-doc-card__header-title {
   min-width: 0;
@@ -3878,7 +3909,7 @@ a:focus-visible {
   display: inline-block;
   max-width: 100%;
   overflow-wrap: break-word;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   white-space: normal;
 }
@@ -3918,11 +3949,11 @@ a:focus-visible {
 }
 .dash-doc-card__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 5px;
   align-items: center;
-  margin-inline-start: auto;
   min-width: 0;
+  flex-shrink: 0;
 }
 .dash-doc-card__status-btn {
   display: inline-flex;
@@ -3968,13 +3999,13 @@ a:focus-visible {
 }
 .ins-payment-remove {
   position: absolute;
-  top: 10px;
+  top: 9px;
   left: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border: 0;
   border-radius: 50%;
   background: var(--fill-tertiary);
@@ -4035,25 +4066,30 @@ a:focus-visible {
   width: 100%;
   text-align: right;
   border: none;
+  color: var(--label-primary);
   cursor: pointer;
 }
 .svc-compact-row__oil-dot {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--feedback-orange-bg, var(--fill-tertiary));
+  background: transparent;
   color: var(--warning);
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 .svc-compact-row__oil-dot .sf-icon {
-  width: var(--icon-xs);
-  height: var(--icon-xs);
+  width: 24px;
+  height: 24px;
 }
 .svc-compact-row__oil-dot--empty {
-  background: var(--fill-tertiary);
+  visibility: hidden;
+}
+.svc-compact-row .mini-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 .svc-compact-row__cost {
   flex-shrink: 0;
@@ -4075,6 +4111,7 @@ a:focus-visible {
   background: none;
   border: none;
   padding: 0;
+  color: var(--label-primary);
   cursor: pointer;
 }
 .svc-timeline__marker {
@@ -4114,6 +4151,7 @@ a:focus-visible {
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   padding: 12px 14px;
+  color: var(--label-primary);
 }
 .svc-timeline__row {
   display: flex;

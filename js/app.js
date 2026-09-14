@@ -134,30 +134,28 @@ const CAR_COLORS = [
 /** رنگ وضعیت خدمات سرویس — بر پایه سیستم رنگ تک‌رنگ + وضعیت‌های success/warning — قابل گسترش */
 const SERVICE_STATUS_COLORS = {
   // ✅ سبز (success) — انجام موفق / تعویض / تکمیل شده
-  "تعویض شد":   { bg: "rgba(22, 163, 74, 0.14)",  fg: "#15803d" },
-  "انجام شد":   { bg: "rgba(22, 163, 74, 0.14)",  fg: "#15803d" },
-  "تعمیر شد":   { bg: "rgba(22, 163, 74, 0.14)",  fg: "#15803d" },
-  "تعویض":      { bg: "rgba(22, 163, 74, 0.14)",  fg: "#15803d" },
+  "تعویض شد":   { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
+  "انجام شد":   { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
+  "تعمیر شد":   { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
+  "تعویض":      { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
 
   // 🟠 کهربایی (warning) — نیاز به توجه / بازدید
-  "بازدید شد":  { bg: "rgba(217, 119, 6, 0.14)",  fg: "#b45309" },
-  "بازدید":     { bg: "rgba(217, 119, 6, 0.14)",  fg: "#b45309" },
-  "باد معمولی": { bg: "rgba(217, 119, 6, 0.14)",  fg: "#b45309" },
+  "بازدید شد":  { bg: "rgba(255, 141, 40, 0.14)",  fg: "#ff8d28" },
+  "بازدید":     { bg: "rgba(255, 141, 40, 0.14)",  fg: "#ff8d28" },
+  "باد معمولی": { bg: "rgba(255, 141, 40, 0.14)",  fg: "#ff8d28" },
 
   // ⚫ مشکی خنثی — اضافه کردن / شارژ / اقدام کمکی (بدون رنگ برند)
-  "اضافه شد":   { bg: "rgba(0, 0, 0, 0.08)",  fg: "#1a1a1a" },
-  "شارژ شد":    { bg: "rgba(0, 0, 0, 0.08)",  fg: "#1a1a1a" },
-  "نیتروژن":    { bg: "rgba(0, 0, 0, 0.08)",  fg: "#1a1a1a" },
-
-  // ⚫ خاکستری تیره — عملیات نظافت / شستشو
-  "شستشو":      { bg: "rgba(94, 94, 94, 0.16)", fg: "#3d3d3d" },
+  "اضافه شد":   { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
+  "شارژ شد":    { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
+  "نیتروژن":    { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
+  "شستشو":      { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
 
   // ⚪ خاکستری میانه — تعداد / کمیت
-  "4 حلقه":     { bg: "rgba(120, 128, 130, 0.18)", fg: "#55595a" },
-  "2 حلقه":     { bg: "rgba(120, 128, 130, 0.18)", fg: "#55595a" },
+  "4 حلقه":     { bg: "rgba(203, 48, 224, 0.14)", fg: "#cb30e0" },
+  "2 حلقه":     { bg: "rgba(203, 48, 224, 0.14)", fg: "#cb30e0" },
 
   // ⚪ خاکستری — پیش‌فرض / ناشناخته
-  _default:     { bg: "rgba(120, 120, 120, 0.16)", fg: "#5e5e5e" },
+  _default:     { bg: "rgba(99, 99, 102, 0.14)", fg: "var(--label-secondary)" },
 };
 
 function getServiceStatusColor(status) {
@@ -699,6 +697,10 @@ async function renderDashboardPage(params, root) {
     const insStatus = docStatusFromDays(insDays);
 
     const nextDue = findNextDuePayment(insurance);
+    const paymentData = insurance.payments || {};
+    const hasPaymentData = Object.values(paymentData).some(
+      (payment) => payment && (payment.amount || payment.date || payment.paid),
+    );
     let insMetaHTML = insurance.toDate
       ? `اعتبار تا ${toFaDigits(insurance.toDate)}`
       : "بیمه‌نامه ثبت نشده";
@@ -714,15 +716,19 @@ async function renderDashboardPage(params, root) {
         insMetaHTML += ` · ${nextDue.label} · ${amountText} · ${toFaDigits(dueDays)} روز مانده`;
       }
       payActionHTML = `<button type="button" class="dash-doc-card__pay-btn" data-pay-key="${nextDue.key}" aria-label="ثبت پرداخت ${nextDue.label}"><span class="sf">${acIcon("checkmark")}</span><span class="dash-doc-card__action-label">ثبت پرداخت ${nextDue.label}</span></button>`;
-    } else if (insurance.toDate) {
+    } else if (insurance.toDate && hasPaymentData) {
       insMetaHTML += " · همه اقساط پرداخت شده";
     }
 
+    const hasPaymentStatus = !!nextDue;
+    docsSection.className = `dash-docs${hasPaymentStatus ? "" : " dash-docs--balanced"}`;
     docsSection.innerHTML = `
       <div class="dash-doc-card">
         <div class="dash-doc-card__header">
-          <span class="dash-doc-card__header-icon sf">${acIcon("car-front-check")}</span>
-          <span>معاینه فنی</span>
+          <div class="dash-doc-card__header-title-group">
+            <span class="dash-doc-card__header-icon sf">${acIcon("car-front-check")}</span>
+            <span>معاینه فنی</span>
+          </div>
         </div>
         <div class="dash-doc-card__body">
           <span class="dash-doc-card__status dash-doc-card__status--${inspStatus.cls}">${inspStatus.text}</span>
@@ -731,11 +737,13 @@ async function renderDashboardPage(params, root) {
       </div>
       <div class="dash-doc-card">
         <div class="dash-doc-card__header">
-          <span class="dash-doc-card__header-icon sf">${acIcon("quotation")}</span>
-          <span class="dash-doc-card__header-title">بیمه‌نامه</span>
+          <div class="dash-doc-card__header-title-group">
+            <span class="dash-doc-card__header-icon sf">${acIcon("quotation")}</span>
+            <span class="dash-doc-card__header-title">بیمه‌نامه</span>
+          </div>
           <div class="dash-doc-card__actions">
             ${payActionHTML}
-            <button type="button" class="dash-doc-card__status-btn" aria-label="وضعیت اقساط"><span class="sf">${acIcon("quotation")}</span><span class="dash-doc-card__action-label">وضعیت اقساط</span></button>
+            ${hasPaymentStatus ? `<button type="button" class="dash-doc-card__status-btn" aria-label="وضعیت اقساط"><span class="sf">${acIcon("quotation")}</span><span class="dash-doc-card__action-label">وضعیت اقساط</span></button>` : ""}
           </div>
         </div>
         <div class="dash-doc-card__body">
@@ -930,7 +938,7 @@ async function renderDashboardPage(params, root) {
       .addEventListener("click", () => navigate("#/services/new"));
     quickButtons
       .querySelector("#quick-search-service-btn")
-      .addEventListener("click", () => navigate("#/services"));
+      .addEventListener("click", () => navigate("#/cars/new"));
   }
 
   function renderRecent() {
@@ -1169,6 +1177,9 @@ async function renderCarFormPage(params, root) {
           </button>
           <button type="button" class="form-reset-btn" id="insurance-reset-btn" title="بازنشانی بیمه‌نامه" aria-label="بازنشانی بیمه‌نامه">
             <span class="sf">${acIcon("trash")}</span>
+          </button>
+          <button type="button" class="form-status-btn insurance-status-btn" id="insurance-status-btn" title="وضعیت اقساط" aria-label="وضعیت اقساط">
+            <span class="sf">${acIcon("quotation")}</span>
           </button>
         </div>
         <div class="other-spec-panel" id="insurance-panel" hidden>
@@ -1766,6 +1777,10 @@ async function renderCarFormPage(params, root) {
     activeInstallmentCount = 0;
     renderPaymentsList();
   });
+  root.querySelector("#insurance-status-btn").addEventListener("click", (event) => {
+    event.stopPropagation();
+    openInsuranceReceipt(state);
+  });
   if (insuranceOpen) {
     insurancePanel.hidden = false;
     insurancePanel.classList.add("is-open");
@@ -2003,7 +2018,7 @@ async function renderServicesListPage(params, root) {
 
   const filterState = { carId: "", title: "", dateRange: "", customDate: "", oilOnly: false };
   let sortBy = "جدیدترین";
-  let viewMode = "card"; // card | timeline | compact
+  let viewMode = await SettingsAPI.get("servicesViewMode", "card"); // card | timeline | compact
 
   root.innerHTML = `
     <header class="page-header">
@@ -2061,6 +2076,7 @@ async function renderServicesListPage(params, root) {
       searchable: false,
       onSelect: (item) => {
         viewMode = item.value;
+        void SettingsAPI.set("servicesViewMode", viewMode);
         list.classList.toggle("service-list--timeline", item.value === "timeline");
         renderList();
       },

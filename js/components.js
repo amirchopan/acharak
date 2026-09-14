@@ -907,9 +907,8 @@ function createServiceCompactRow(service, car, onClick) {
   row.className = 'mini-card svc-compact-row';
   const hasOilChange = !!(service.oilChange && service.oilChange.done);
   row.innerHTML = `
-    ${hasOilChange ? `<span class="svc-compact-row__oil-dot sf" title="تعویض روغن">${acIcon('engine-oil')}</span>` : '<span class="svc-compact-row__oil-dot svc-compact-row__oil-dot--empty"></span>'}
     <div class="mini-card__info">
-      <p class="mini-card__title">${escapeHtml(car ? car.brandModel : 'خودرو حذف‌شده')}</p>
+      <p class="mini-card__title">${escapeHtml(car ? car.brandModel : 'خودرو حذف‌شده')} ${hasOilChange ? `<span class="svc-compact-row__oil-dot sf" title="تعویض روغن">${acIcon('engine-oil')}</span>` : ''}</p>
       <p class="mini-card__sub">${toFaDigits(service.date || '')} · ${formatKm(service.km)}</p>
     </div>
     <span class="svc-compact-row__cost">${formatToman(service.totalCost)}</span>
@@ -978,9 +977,13 @@ async function ensureReceiptFont() {
   return family;
 }
 
-async function buildReceiptPngBlob(service, car, rows) {
+async function buildReceiptPngBlob(service, car, rows, options = {}) {
   const fontFamily = await ensureReceiptFont();
   const dark = isAppDarkTheme();
+  const title = options.title || (car ? car.brandModel : "صورتحساب سرویس");
+  const meta = options.meta || `${toFaDigits(service.date || "")}  ·  ${formatKm(service.km)}`;
+  const emptyText = options.emptyText || "خدمتی ثبت نشده است";
+  const totalLabel = options.totalLabel || "جمع کل هزینه‌ها";
 
   // در تم شب رنگ muted را قوی‌تر بگیر تا دیده شود
   const colors = dark
@@ -1031,13 +1034,13 @@ async function buildReceiptPngBlob(service, car, rows) {
   ctx.textAlign = "center";
   ctx.direction = "rtl";
   ctx.font = `700 18px "${fontFamily}", Tahoma, sans-serif`;
-  ctx.fillText(car ? car.brandModel : "صورتحساب سرویس", width / 2, y + 22);
+  ctx.fillText(title, width / 2, y + 22);
 
   // تاریخ و کیلومتر — Regular (نه 500)
   ctx.fillStyle = colors.muted;
   ctx.font = `400 13px "${fontFamily}", Tahoma, sans-serif`;
   ctx.fillText(
-    `${toFaDigits(service.date || "")}  ·  ${formatKm(service.km)}`,
+    meta,
     width / 2,
     y + 46,
   );
@@ -1055,7 +1058,7 @@ async function buildReceiptPngBlob(service, car, rows) {
     ctx.fillStyle = colors.muted;
     ctx.textAlign = "center";
     ctx.font = `400 14px "${fontFamily}", Tahoma, sans-serif`;
-    ctx.fillText("خدمتی ثبت نشده است", width / 2, y + 20);
+    ctx.fillText(emptyText, width / 2, y + 20);
     y += 40;
   } else {
     rows.forEach(([title, sub, cost]) => {
@@ -1093,7 +1096,7 @@ async function buildReceiptPngBlob(service, car, rows) {
   ctx.textAlign = "right";
   ctx.fillStyle = colors.title;
   ctx.font = `700 16px "${fontFamily}", Tahoma, sans-serif`;
-  ctx.fillText("جمع کل هزینه‌ها", right, y + 8);
+  ctx.fillText(totalLabel, right, y + 8);
   ctx.textAlign = "left";
   ctx.fillText(formatToman(service.totalCost), left, y + 8);
 
@@ -1111,9 +1114,9 @@ async function buildReceiptPngBlob(service, car, rows) {
   });
 }
 
-async function saveReceiptImage(service, car, rows) {
+async function saveReceiptImage(service, car, rows, options = {}) {
   try {
-    const blob = await buildReceiptPngBlob(service, car, rows);
+    const blob = await buildReceiptPngBlob(service, car, rows, options);
     const stamp = (service.date || '').replace(/\//g, '-') || Date.now();
     const filename = `receipt-${stamp}.png`;
     const url = URL.createObjectURL(blob);
@@ -1232,7 +1235,12 @@ function openInsuranceReceipt(car) {
   saveBtn.className = "receipt__save-btn receipt__save-btn--sheet";
   saveBtn.setAttribute("aria-label", "ذخیره تصویر صورتحساب");
   saveBtn.innerHTML = `<span class="sf">${acIcon("download-cloud")}</span>`;
-  saveBtn.addEventListener("click", () => saveReceiptImage(service, car, payments));
+  saveBtn.addEventListener("click", () => saveReceiptImage(service, car, payments, {
+    title: `${car.brandModel || "خودرو"} · بیمه‌نامه`,
+    meta: insurance.toDate ? `اعتبار تا ${toFaDigits(insurance.toDate)}` : "تاریخ اعتبار ثبت نشده",
+    emptyText: "قسطی ثبت نشده است",
+    totalLabel: "جمع مبالغ",
+  }));
   actions.appendChild(saveBtn);
   header.insertBefore(actions, closeBtn);
 
