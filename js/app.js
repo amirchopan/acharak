@@ -281,7 +281,8 @@ function computePartGauge(currentKm, replacedKm, lifeKm) {
     return {
       hasData: true,
       usedPercent: 0,
-      displayPercent: 0,
+      remainingPercent: 100,
+      displayPercent: 100,
       remainingKm: Math.round(life),
       overdueKm: 0,
       usedKm: 0,
@@ -296,6 +297,8 @@ function computePartGauge(currentKm, replacedKm, lifeKm) {
   if (!Number.isFinite(usedRatio) || usedRatio < 0) usedRatio = 0;
 
   const rawPercent = Math.round(usedRatio * 100);
+  const usedPercent = Math.min(rawPercent, 100);
+  const remainingPercent = Math.max(0, 100 - usedPercent);
   const overdue = usedRatio >= 1;
   const remainingKm = Math.max(0, Math.round(life - usedKm));
   const overdueKm = overdue ? Math.round(usedKm - life) : 0;
@@ -307,8 +310,9 @@ function computePartGauge(currentKm, replacedKm, lifeKm) {
 
   return {
     hasData: true,
-    usedPercent: Math.min(rawPercent, 100), // هرگز بالای ۱۰۰٪
-    displayPercent: Math.min(rawPercent, 100),
+    usedPercent,
+    remainingPercent,
+    displayPercent: remainingPercent,
     remainingKm,
     overdueKm,
     usedKm: Math.round(usedKm),
@@ -337,7 +341,7 @@ function renderLinearBarHtml(title, gauge, extraSub = "") {
         <div class="maint-bar__track"><div class="maint-bar__fill" style="width:0%"></div></div>
       </div>`;
   }
-  const pct = gauge.displayPercent;
+  const pct = gauge.remainingPercent;
   const sub =
     extraSub ||
     (gauge.overdue
@@ -347,7 +351,7 @@ function renderLinearBarHtml(title, gauge, extraSub = "") {
     <div class="maint-bar maint-bar--${gauge.level}">
       <div class="maint-bar__head">
         <span class="maint-bar__title">${escapeHtml(title)}</span>
-        <span class="maint-bar__pct">${toFaDigits(gauge.usedPercent)}٪</span>
+        <span class="maint-bar__pct">${toFaDigits(gauge.remainingPercent)}٪ باقی‌مانده</span>
       </div>
       <div class="maint-bar__track">
         <div class="maint-bar__fill" style="width:${pct}%"></div>
@@ -365,7 +369,7 @@ function renderCircleGaugeHtml(title, gauge, metaLine = "") {
   const level = gauge && gauge.hasData ? gauge.level : "empty";
   const centerText =
     gauge && gauge.hasData
-      ? `${toFaDigits(Math.min(gauge.usedPercent, 100))}٪`
+      ? `${toFaDigits(gauge.remainingPercent)}٪`
       : "—";
   const sub =
     gauge && gauge.hasData
@@ -575,6 +579,7 @@ async function renderDashboardPage(params, root) {
       if (!isFinite(usedRatio) || usedRatio < 0) usedRatio = 0;
 
       const usedPercent = Math.round(usedRatio * 100);
+      const remainingPercent = Math.max(0, 100 - Math.min(usedPercent, 100));
       const remainingKm = Math.max(0, Math.round(lifeKm - usedKm));
       let level = "ok"; // سبز
       if (usedRatio >= 1)
@@ -586,7 +591,8 @@ async function renderDashboardPage(params, root) {
       return {
         hasData: true,
         usedPercent: Math.min(usedPercent, 999),
-        displayPercent: Math.min(usedPercent, 100), // برای قوس گیج حداکثر ۱۰۰
+        remainingPercent,
+        displayPercent: remainingPercent,
         remainingKm,
         usedKm: Math.round(usedKm),
         lifeKm: Math.round(lifeKm),
@@ -827,7 +833,7 @@ async function renderDashboardPage(params, root) {
         gauge: computePartGauge(currentKm, m.replacedKm, m.lifeKm),
       }))
       .filter((x) => x.gauge.hasData)
-      .sort((a, b) => b.gauge.usedPercent - a.gauge.usedPercent)
+      .sort((a, b) => a.gauge.remainingPercent - b.gauge.remainingPercent)
       .slice(0, 4);
 
     const oilSub = oilGauge.hasData
@@ -3167,7 +3173,7 @@ async function renderMaintenancePage(params, root) {
       // بقیه: بحرانی‌ترها بالاتر
       const ga = computePartGauge(currentKm, a.replacedKm, a.lifeKm);
       const gb = computePartGauge(currentKm, b.replacedKm, b.lifeKm);
-      return (gb.usedPercent || 0) - (ga.usedPercent || 0);
+      return (ga.remainingPercent || 0) - (gb.remainingPercent || 0);
     });
 
     listEl.innerHTML = "";
