@@ -3979,6 +3979,11 @@ a:focus-visible {
 }
 
 @media (max-width: 420px) {
+  .dash-docs,
+  .dash-docs--balanced {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .dash-doc-card__action-label {
     display: none;
   }
