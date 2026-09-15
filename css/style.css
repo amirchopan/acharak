@@ -2658,6 +2658,14 @@ img.sf-icon {
 .catalog-search-row .btn {
   flex-shrink: 0;
   white-space: nowrap;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border-color: var(--separator);
+  color: var(--label-primary);
+  font-size: 13px;
+  font-weight: 400;
 }
 .catalog-list {
   display: flex;
@@ -3194,10 +3202,6 @@ img.sf-icon {
   .quick-flow--first-step .quick-flow__back-btn {
     display: none;
   }
-  .quick-flow--first-step .quick-flow__nav .btn {
-    min-height: 38px;
-    padding-block: 7px;
-  }
 }
 /* ---------- برچسب با آیکن ---------- */
 .field__label-with-icon {
@@ -3233,6 +3237,9 @@ img.sf-icon {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 1;
+  min-width: 0;
+  justify-content: space-between;
   flex-shrink: 0;
   background: var(--bg-secondary);
   border: 1px solid var(--separator);
@@ -4427,6 +4434,9 @@ a:focus-visible {
 }
 .quick-flow__nav .btn {
   flex: 1;
+}
+.quick-flow--first-step .quick-flow__back-btn {
+  display: none;
 }
 .quick-flow__chips {
   display: flex;

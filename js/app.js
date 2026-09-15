@@ -206,6 +206,9 @@ function updateThemeColor(mode) {
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
     meta.setAttribute("content", color);
   });
+  document.querySelectorAll('meta[name="mobile-web-app-status-bar-style"]').forEach((meta) => {
+    meta.setAttribute("content", dark ? "black-translucent" : "default");
+  });
   document.documentElement.style.colorScheme = dark ? "dark" : "light";
 
   if (!systemThemeMediaQuery) {
