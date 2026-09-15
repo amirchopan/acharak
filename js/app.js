@@ -209,6 +209,12 @@ function updateThemeColor(mode) {
   document.querySelectorAll('meta[name="mobile-web-app-status-bar-style"]').forEach((meta) => {
     meta.setAttribute("content", dark ? "black-translucent" : "default");
   });
+  document.querySelectorAll('meta[name="apple-mobile-web-app-status-bar-style"]').forEach((meta) => {
+    meta.setAttribute("content", dark ? "black-translucent" : "default");
+  });
+  document.querySelectorAll('meta[name="color-scheme"]').forEach((meta) => {
+    meta.setAttribute("content", dark ? "dark" : "light");
+  });
   document.documentElement.style.colorScheme = dark ? "dark" : "light";
 
   if (!systemThemeMediaQuery) {
