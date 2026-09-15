@@ -867,6 +867,7 @@ function createCarCard(car, onClick) {
 function createServiceCard(service, car, onPreview, onClick) {
   const card = document.createElement('div');
   card.className = 'card service-card';
+  const totalCost = Number(service.totalCost) || Number(service.generalCost) || 0;
   const items = service.serviceItems || [];
   const hasOilChange = !!(service.oilChange && service.oilChange.done);
   const oilPill = hasOilChange
@@ -887,7 +888,7 @@ function createServiceCard(service, car, onPreview, onClick) {
       </div>
       <div class="service-card__row service-card__row--meta">
         <span class="service-card__km sf-inline">${formatKm(service.km)}</span>
-        <span class="service-card__cost">${formatToman(service.totalCost)}</span>
+        <span class="service-card__cost">${formatToman(totalCost)}</span>
       </div>
       <div class="service-card__pills">${oilPill}${pills}${moreCount ? `<span class="pill pill--muted">+${toFaDigits(moreCount)}</span>` : ""}</div>    </button>
     <button type="button" class="service-card__preview-btn">پیش‌نمایش خدمات</button>
@@ -905,13 +906,14 @@ function createServiceCompactRow(service, car, onClick) {
   const row = document.createElement('button');
   row.type = 'button';
   row.className = 'mini-card svc-compact-row';
+  const totalCost = Number(service.totalCost) || Number(service.generalCost) || 0;
   const hasOilChange = !!(service.oilChange && service.oilChange.done);
   row.innerHTML = `
     <div class="mini-card__info">
       <p class="mini-card__title">${escapeHtml(car ? car.brandModel : 'خودرو حذف‌شده')} ${hasOilChange ? `<span class="svc-compact-row__oil-dot sf" title="تعویض روغن">${acIcon('engine-oil')}</span>` : ''}</p>
       <p class="mini-card__sub">${toFaDigits(service.date || '')} · ${formatKm(service.km)}</p>
     </div>
-    <span class="svc-compact-row__cost">${formatToman(service.totalCost)}</span>
+    <span class="svc-compact-row__cost">${formatToman(totalCost)}</span>
   `;
   row.addEventListener('click', onClick);
   return row;
@@ -922,6 +924,7 @@ function createServiceTimelineItem(service, car, onClick) {
   const item = document.createElement('button');
   item.type = 'button';
   item.className = 'svc-timeline__item';
+  const totalCost = Number(service.totalCost) || Number(service.generalCost) || 0;
   const items = service.serviceItems || [];
   const hasOilChange = !!(service.oilChange && service.oilChange.done);
   const pills = items
@@ -941,7 +944,7 @@ function createServiceTimelineItem(service, car, onClick) {
       <div class="svc-timeline__card">
         <div class="svc-timeline__row">
           <strong>${escapeHtml(car ? car.brandModel : 'خودرو حذف‌شده')}</strong>
-          <span>${formatToman(service.totalCost)}</span>
+          <span>${formatToman(totalCost)}</span>
         </div>
         <div class="svc-timeline__row svc-timeline__row--meta">
           <span>${formatKm(service.km)}</span>
@@ -1098,7 +1101,7 @@ async function buildReceiptPngBlob(service, car, rows, options = {}) {
   ctx.font = `700 16px "${fontFamily}", Tahoma, sans-serif`;
   ctx.fillText(totalLabel, right, y + 8);
   ctx.textAlign = "left";
-  ctx.fillText(formatToman(service.totalCost), left, y + 8);
+  ctx.fillText(formatToman(Number(service.totalCost) || Number(service.generalCost) || 0), left, y + 8);
 
   // فوتر فقط روی تصویر — نام برنامه
   ctx.textAlign = "center";
@@ -1199,7 +1202,7 @@ function openServiceReceipt(service, car) {
     <div class="receipt__divider receipt__divider--dashed"></div>
     <div class="receipt__total">
       <span>جمع کل</span>
-      <span>${formatToman(service.totalCost)}</span>
+      <span>${formatToman(Number(service.totalCost) || Number(service.generalCost) || 0)}</span>
     </div>
   `;
   sheet.body.appendChild(receipt);

@@ -8,8 +8,8 @@
   "orientation": "portrait-primary",
   "dir": "rtl",
   "lang": "fa",
-  "background_color": "#FFFFFF",
-  "theme_color": "#000000",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
   "categories": ["productivity", "utilities", "lifestyle"],
   "icons": [
     {
