@@ -2404,7 +2404,6 @@ async function renderServiceFormPage(params, root) {
     <header class="page-header page-header--form">
       <a href="#/services" class="page-header__back sf">${acIcon("chevron-right")}</a>
       <div class="page-header__title-group">
-        <span class="page-header__eyebrow">${isEdit ? "سابقه سرویس" : "سرویس تازه"}</span>
         <h1>${isEdit ? "ویرایش سرویس" : "ثبت سرویس"}</h1>
       </div>
       <button type="button" class="service-mode-switch" id="switch-quick-service-btn">
@@ -2415,11 +2414,7 @@ async function renderServiceFormPage(params, root) {
     <form class="form-stack service-form" novalidate>
       <section class="service-form__identity">
         <div class="service-form__identity-heading">
-          <div>
-            <span class="service-form__overline">اطلاعات پایه</span>
-            <h2>این سرویس برای کدام خودروست؟</h2>
-          </div>
-          <span class="service-form__identity-icon sf">${acIcon("car-front")}</span>
+          <div><h2>این سرویس برای کدام خودروست؟</h2></div>
         </div>
         <div class="card service-form__car-card">
           <div class="field"><label>خودرو</label><div class="service-car-combo"></div></div>
@@ -2431,7 +2426,7 @@ async function renderServiceFormPage(params, root) {
           <input type="text" class="text-input" id="center-name-input" value="${escapeHtml(state.centerName || "")}" placeholder="مثال: تعویض روغن الماس" />
         </div>
 
-        <div class="field-row">
+        <div class="field-row service-form__date-km-row">
           <div class="field">
             <label class="field__label-with-icon"><span class="sf field__label-icon">${acIcon("calendar")}</span>تاریخ انجام سرویس</label>
             <button type="button" class="text-input text-input--button" id="service-date-btn">${toFaDigits(state.date)}</button>
@@ -2931,6 +2926,7 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
 
   function renderStep() {
     renderDots();
+    wrap.classList.toggle("quick-flow--first-step", stepIndex === 0);
     backBtn.style.visibility = stepIndex === 0 ? "hidden" : "visible";
     normalBtn.style.display = stepIndex === 0 ? "" : "none";
     nextBtn.textContent = stepIndex === TOTAL_STEPS - 1 ? "ثبت سرویس" : "بعدی";
@@ -2939,17 +2935,21 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
     if (stepIndex === 0) {
       bodyEl.innerHTML = `
         <h3 class="quick-flow__title">انتخاب خودرو</h3>
-        <div class="field"><div class="quick-flow__car-combo"></div></div>
+        <div class="quick-flow__car-chips"></div>
       `;
-      bodyEl.querySelector(".quick-flow__car-combo").appendChild(
-        createCombobox({
-          items: cars.map((c) => ({ value: c.id, label: c.brandModel || "خودرو" })),
-          value: data.carId,
-          placeholder: "خودرو",
-          searchable: false,
-          onSelect: (item) => { data.carId = item.value; },
-        }),
-      );
+      const carChips = bodyEl.querySelector(".quick-flow__car-chips");
+      cars.forEach((car) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = `chip-toggle${data.carId === car.id ? " is-active" : ""}`;
+        chip.textContent = car.brandModel || "خودرو";
+        chip.addEventListener("click", () => {
+          data.carId = car.id;
+          carChips.querySelectorAll(".chip-toggle").forEach((item) => item.classList.remove("is-active"));
+          chip.classList.add("is-active");
+        });
+        carChips.appendChild(chip);
+      });
     } else if (stepIndex === 1) {
       bodyEl.innerHTML = `
         <h3 class="quick-flow__title">تاریخ انجام سرویس</h3>
@@ -3135,8 +3135,10 @@ function openServiceItemsCatalog(catalog, state, onDone) {
   const wrap = document.createElement("div");
   wrap.className = "catalog-page";
   wrap.innerHTML = `
-    <div class="field"><input type="text" class="text-input" placeholder="جستجو در خدمات…" id="catalog-search-input" /></div>
-    <button type="button" class="btn btn--secondary btn--block" id="add-custom-service-btn">+ خدمت دلخواه</button>
+    <div class="catalog-search-row">
+      <input type="text" class="text-input" placeholder="جستجو در خدمات…" id="catalog-search-input" />
+      <button type="button" class="btn btn--secondary btn--small" id="add-custom-service-btn">+ خدمت دلخواه</button>
+    </div>
     <div class="catalog-list"></div>
   `;
   sheet.body.appendChild(wrap);

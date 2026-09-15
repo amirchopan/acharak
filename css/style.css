@@ -2646,6 +2646,19 @@ img.sf-icon {
   flex-direction: column;
   gap: 12px;
 }
+.catalog-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.catalog-search-row .text-input {
+  min-width: 0;
+  flex: 1;
+}
+.catalog-search-row .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .catalog-list {
   display: flex;
   flex-direction: column;
@@ -3174,6 +3187,18 @@ img.sf-icon {
     grid-template-columns: 1fr 1fr;
   }
 }
+@media (max-width: 699px) {
+  .service-form__date-km-row {
+    grid-template-columns: 1fr;
+  }
+  .quick-flow--first-step .quick-flow__back-btn {
+    display: none;
+  }
+  .quick-flow--first-step .quick-flow__nav .btn {
+    min-height: 38px;
+    padding-block: 7px;
+  }
+}
 /* ---------- برچسب با آیکن ---------- */
 .field__label-with-icon {
   display: inline-flex;
@@ -3207,20 +3232,22 @@ img.sf-icon {
 .stepper--inline {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-shrink: 0;
-  background: var(--fill-tertiary);
-  border-radius: var(--radius-sm);
-  padding: 4px 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-pill);
+  padding: 3px 5px;
 }
 .stepper--inline .stepper__btn {
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  background: var(--fill-tertiary);
+  font-size: 15px;
 }
 .stepper--inline .stepper__value {
-  font-size: 15px;
-  min-width: 20px;
+  font-size: 14px;
+  min-width: 22px;
 }
 
 /* ---------- کارت فشرده خدمات ---------- */
@@ -4402,6 +4429,11 @@ a:focus-visible {
   flex: 1;
 }
 .quick-flow__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.quick-flow__car-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
