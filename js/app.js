@@ -297,31 +297,43 @@ function registerAllRoutes() {
   registerRoute("#/settings", renderSettingsPage);
 }
 
-function renderGpsPage(params, root) {
+async function renderGpsPage(params, root) {
   document.getElementById("tab-bar")?.remove();
   removeFab();
 
+  const query = new URLSearchParams(window.location.hash.split("?")[1] || "");
+  const selectedCar = query.get("carId") ? await CarsAPI.getById(query.get("carId")) : null;
+  const cars = await CarsAPI.getAll();
   const state = {
     watchId: null,
     startedAt: null,
     lastPosition: null,
     distanceMeters: 0,
+    baseKm: selectedCar ? Number(selectedCar.currentKm) || 0 : null,
+    lastSavedKm: selectedCar ? Number(selectedCar.currentKm) || 0 : null,
+    savingKm: false,
     position: null,
     error: "",
   };
 
   root.innerHTML = `
     <header class="page-header page-header--form">
-      <a href="#/cars/new" class="page-header__back sf" aria-label="بازگشت">${acIcon("chevron-right")}</a>
+      <a href="${selectedCar ? `#/cars/${encodeURIComponent(selectedCar.id)}/edit` : "#/cars"}" class="page-header__back sf" aria-label="بازگشت">${acIcon("chevron-right")}</a>
       <h1>آزمایش GPS خودرو</h1>
     </header>
     <div class="gps-page">
       <div class="gps-status-card">
         <div class="gps-status-card__row">
           <span class="gps-status-card__dot"></span>
-          <strong class="gps-status-card__status">در حال آماده‌سازی</strong>
+          <strong class="gps-status-card__status" data-gps="status">آماده شروع</strong>
         </div>
-        <p class="gps-status-card__hint">برای شروع، اجازه دسترسی به موقعیت مکانی را تأیید کنید و با خودرو حرکت کنید.</p>
+        <p class="gps-status-card__hint" data-gps="hint">برای شروع، دکمه دریافت GPS را بزنید و اجازه دسترسی به موقعیت مکانی را تأیید کنید.</p>
+      </div>
+      <div class="gps-details card">
+        <h2>خودروی این تست</h2>
+        <p><span>خودرو</span><strong data-gps="car">${selectedCar ? escapeHtml(selectedCar.brandModel || "خودرو") : "خودرویی انتخاب نشده"}</strong></p>
+        <p><span>کیلومتر فعلی</span><strong data-gps="odometer">${selectedCar ? formatKm(selectedCar.currentKm) : "—"}</strong></p>
+        <p><span>خودروهای ثبت‌شده</span><strong>${toFaDigits(cars.length)}</strong></p>
       </div>
       <div class="gps-metrics">
         <div class="gps-metric gps-metric--primary"><span>مسافت این تست</span><strong data-gps="distance">۰ متر</strong></div>
@@ -340,9 +352,12 @@ function renderGpsPage(params, root) {
       <p class="gps-error" data-gps="error"></p>
       <div class="gps-actions">
         <button type="button" class="btn btn--primary btn--block" data-gps-action="start">شروع دریافت GPS</button>
+        <button type="button" class="btn btn--secondary btn--block" data-gps-action="stop" disabled>توقف دریافت GPS</button>
         <button type="button" class="btn btn--secondary btn--block" data-gps-action="reset">صفر کردن مسافت</button>
       </div>
-      <p class="gps-note">این صفحه برای تست است. مسافت با GPS گوشی محاسبه می‌شود و ممکن است به‌دلیل دقت سیگنال، تونل یا ساختمان‌ها کمی خطا داشته باشد.</p>
+      <p class="gps-note">${selectedCar
+        ? "مسافت معتبر GPS به‌صورت خودکار به کیلومتر فعلی همین خودرو اضافه و ذخیره می‌شود. برای توقف موقت، دکمه توقف را بزنید."
+        : "برای به‌روزرسانی خودکار کیلومتر، GPS را از صفحه ویرایش یک خودروی ذخیره‌شده باز کنید."}</p>
     </div>
   `;
 
@@ -368,20 +383,55 @@ function renderGpsPage(params, root) {
         latitude,
         longitude,
       );
-      if (segment <= Math.max(accuracy || 0, state.lastPosition.accuracy || 0) * 3) {
+      const currentAccuracy = Number.isFinite(accuracy) ? accuracy : 999;
+      const previousAccuracy = Number.isFinite(state.lastPosition.accuracy)
+        ? state.lastPosition.accuracy
+        : currentAccuracy;
+      const speedMps = Number.isFinite(speed) ? speed : null;
+      const minimumSegment = Math.max(15, currentAccuracy * 1.25, previousAccuracy * 1.25);
+      const isMoving = speedMps !== null
+        ? speedMps >= 2
+        : false;
+      if (isMoving && segment >= minimumSegment) {
         state.distanceMeters += segment;
+        state.lastPosition = { latitude, longitude, accuracy };
+        if (selectedCar) {
+          const updatedKm = Math.floor((state.baseKm * 1000 + state.distanceMeters) / 1000);
+          if (updatedKm > state.lastSavedKm && !state.savingKm) {
+            state.savingKm = true;
+            selectedCar.currentKm = updatedKm;
+            selectedCar.kmUpdatedAt = todayJalaliStr();
+            selectedCar.updatedAt = new Date().toISOString();
+            CarsAPI.save(selectedCar)
+              .then(() => {
+                state.lastSavedKm = updatedKm;
+                state.savingKm = false;
+                get("odometer").textContent = formatKm(updatedKm);
+              })
+              .catch(() => {
+                state.savingKm = false;
+                selectedCar.currentKm = state.lastSavedKm;
+                get("error").textContent = "ذخیره کیلومتر خودرو انجام نشد؛ دوباره تلاش کنید.";
+                setStatus("خطا در ذخیره کیلومتر");
+              });
+          }
+        }
       }
+    } else {
+      state.lastPosition = { latitude, longitude, accuracy };
     }
-    state.lastPosition = { latitude, longitude, accuracy };
     state.position = position;
     get("distance").textContent = formatDistance(state.distanceMeters);
-    get("speed").textContent = Number.isFinite(speed) && speed >= 0 ? `${formatNumberFa((speed * 3.6).toFixed(1))} کیلومتر/ساعت` : "—";
+    get("speed").textContent = Number.isFinite(speed) && speed >= 2
+      ? `${formatNumberFa((speed * 3.6).toFixed(1))} کیلومتر/ساعت`
+      : "۰ کیلومتر/ساعت";
     get("accuracy").textContent = Number.isFinite(accuracy) ? `${formatNumberFa(Math.round(accuracy))} متر` : "—";
-    get("heading").textContent = direction(heading);
+    get("heading").textContent = Number.isFinite(speed) && speed >= 2 ? direction(heading) : "ثابت";
     get("altitude").textContent = Number.isFinite(altitude) ? `${formatNumberFa(Math.round(altitude))} متر` : "—";
     get("time").textContent = new Date(position.timestamp).toLocaleTimeString("fa-IR");
     get("coords").textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
     get("error").textContent = "";
+    get("hint").textContent = "موقعیت دریافت شد. برای اندازه‌گیری واقعی، با خودرو حرکت کنید.";
     setStatus("GPS فعال است", true);
   };
   const start = () => {
@@ -391,6 +441,9 @@ function renderGpsPage(params, root) {
       return;
     }
     if (state.watchId !== null) return;
+    root.querySelector('[data-gps-action="start"]').disabled = true;
+    root.querySelector('[data-gps-action="stop"]').disabled = false;
+    state.lastPosition = null;
     state.startedAt = Date.now();
     state.watchId = navigator.geolocation.watchPosition(updatePosition, (error) => {
       const messages = {
@@ -402,8 +455,20 @@ function renderGpsPage(params, root) {
       setStatus("خطا در دریافت GPS");
     }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 });
     setStatus("در حال دریافت GPS", true);
+    get("hint").textContent = "در انتظار اولین موقعیت معتبر گوشی هستیم...";
+  };
+  const stop = () => {
+    if (state.watchId === null) return;
+    navigator.geolocation.clearWatch(state.watchId);
+    state.watchId = null;
+    state.lastPosition = null;
+    root.querySelector('[data-gps-action="start"]').disabled = false;
+    root.querySelector('[data-gps-action="stop"]').disabled = true;
+    setStatus("دریافت GPS متوقف شد");
+    get("hint").textContent = "دریافت GPS متوقف است. برای ادامه، دکمه شروع را بزنید.";
   };
   root.querySelector('[data-gps-action="start"]').addEventListener("click", start);
+  root.querySelector('[data-gps-action="stop"]').addEventListener("click", stop);
   root.querySelector('[data-gps-action="reset"]').addEventListener("click", () => {
     state.distanceMeters = 0;
     state.lastPosition = null;
@@ -1824,14 +1889,19 @@ async function renderCarFormPage(params, root) {
   bindThousandsInput(dailyInput, (raw) => {
     dailyKmRaw = raw;
     updateMonthlyHint();
-    root.querySelector("#gps-odometer-checkbox").addEventListener("change", (e) => {
-      state.gpsOdometerEnabled = e.target.checked;
-    });
-    root.querySelector("#open-gps-test-btn").addEventListener("click", () => {
-      state.gpsOdometerEnabled = true;
-      root.querySelector("#gps-odometer-checkbox").checked = true;
-      window.open("#/gps", "_blank", "noopener");
-    });
+  });
+  root.querySelector("#gps-odometer-checkbox").addEventListener("change", (e) => {
+    state.gpsOdometerEnabled = e.target.checked;
+  });
+  root.querySelector("#open-gps-test-btn").addEventListener("click", () => {
+    if (!isEdit) {
+      showToast("ابتدا خودرو را ذخیره کنید، سپس GPS را برای همان خودرو باز کنید", "error");
+      return;
+    }
+    state.gpsOdometerEnabled = true;
+    root.querySelector("#gps-odometer-checkbox").checked = true;
+    const gpsHash = `#/gps?carId=${encodeURIComponent(state.id)}`;
+    window.open(gpsHash, "_blank", "noopener");
   });
   updateMonthlyHint();
 
