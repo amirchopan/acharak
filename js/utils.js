@@ -292,7 +292,7 @@ const ICON_ALIASES = {
   chevronRight: 'chevron-forward',
   check: 'checkmark',
   search: 'search',
-  info: 'info-circled',
+  info: 'info',
 };
 
 /**

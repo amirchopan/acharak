@@ -293,7 +293,139 @@ function registerAllRoutes() {
   registerRoute("#/services/:id/edit", renderServiceFormPage);
   registerRoute("#/maintenance", renderMaintenancePage);
   registerRoute("#/reports", renderReportsPage);
+  registerRoute("#/gps", renderGpsPage);
   registerRoute("#/settings", renderSettingsPage);
+}
+
+function renderGpsPage(params, root) {
+  document.getElementById("tab-bar")?.remove();
+  removeFab();
+
+  const state = {
+    watchId: null,
+    startedAt: null,
+    lastPosition: null,
+    distanceMeters: 0,
+    position: null,
+    error: "",
+  };
+
+  root.innerHTML = `
+    <header class="page-header page-header--form">
+      <a href="#/cars/new" class="page-header__back sf" aria-label="بازگشت">${acIcon("chevron-right")}</a>
+      <h1>آزمایش GPS خودرو</h1>
+    </header>
+    <div class="gps-page">
+      <div class="gps-status-card">
+        <div class="gps-status-card__row">
+          <span class="gps-status-card__dot"></span>
+          <strong class="gps-status-card__status">در حال آماده‌سازی</strong>
+        </div>
+        <p class="gps-status-card__hint">برای شروع، اجازه دسترسی به موقعیت مکانی را تأیید کنید و با خودرو حرکت کنید.</p>
+      </div>
+      <div class="gps-metrics">
+        <div class="gps-metric gps-metric--primary"><span>مسافت این تست</span><strong data-gps="distance">۰ متر</strong></div>
+        <div class="gps-metric"><span>سرعت</span><strong data-gps="speed">—</strong></div>
+        <div class="gps-metric"><span>دقت موقعیت</span><strong data-gps="accuracy">—</strong></div>
+        <div class="gps-metric"><span>جهت حرکت</span><strong data-gps="heading">—</strong></div>
+        <div class="gps-metric"><span>ارتفاع</span><strong data-gps="altitude">—</strong></div>
+        <div class="gps-metric"><span>آخرین دریافت</span><strong data-gps="time">—</strong></div>
+      </div>
+      <div class="gps-details card">
+        <h2>وضعیت اتصال</h2>
+        <p><span>اینترنت</span><strong data-gps="network">${navigator.onLine ? "متصل" : "قطع"}</strong></p>
+        <p><span>GPS مرورگر</span><strong data-gps="support">${navigator.geolocation ? "پشتیبانی می‌شود" : "پشتیبانی نمی‌شود"}</strong></p>
+        <p><span>مختصات</span><strong data-gps="coords">—</strong></p>
+      </div>
+      <p class="gps-error" data-gps="error"></p>
+      <div class="gps-actions">
+        <button type="button" class="btn btn--primary btn--block" data-gps-action="start">شروع دریافت GPS</button>
+        <button type="button" class="btn btn--secondary btn--block" data-gps-action="reset">صفر کردن مسافت</button>
+      </div>
+      <p class="gps-note">این صفحه برای تست است. مسافت با GPS گوشی محاسبه می‌شود و ممکن است به‌دلیل دقت سیگنال، تونل یا ساختمان‌ها کمی خطا داشته باشد.</p>
+    </div>
+  `;
+
+  const get = (key) => root.querySelector(`[data-gps="${key}"]`);
+  const setStatus = (text, active = false) => {
+    get("status").textContent = text;
+    root.querySelector(".gps-status-card__dot").classList.toggle("is-active", active);
+  };
+  const formatDistance = (meters) => meters >= 1000
+    ? `${formatNumberFa((meters / 1000).toFixed(2))} کیلومتر`
+    : `${formatNumberFa(Math.round(meters))} متر`;
+  const direction = (heading) => {
+    if (!Number.isFinite(heading)) return "—";
+    const names = ["شمال", "شمال‌شرق", "شرق", "جنوب‌شرق", "جنوب", "جنوب‌غرب", "غرب", "شمال‌غرب"];
+    return `${names[Math.round(heading / 45) % 8]} (${toFaDigits(Math.round(heading))}°)`;
+  };
+  const updatePosition = (position) => {
+    const { latitude, longitude, accuracy, altitude, heading, speed } = position.coords;
+    if (state.lastPosition) {
+      const segment = haversineMeters(
+        state.lastPosition.latitude,
+        state.lastPosition.longitude,
+        latitude,
+        longitude,
+      );
+      if (segment <= Math.max(accuracy || 0, state.lastPosition.accuracy || 0) * 3) {
+        state.distanceMeters += segment;
+      }
+    }
+    state.lastPosition = { latitude, longitude, accuracy };
+    state.position = position;
+    get("distance").textContent = formatDistance(state.distanceMeters);
+    get("speed").textContent = Number.isFinite(speed) && speed >= 0 ? `${formatNumberFa((speed * 3.6).toFixed(1))} کیلومتر/ساعت` : "—";
+    get("accuracy").textContent = Number.isFinite(accuracy) ? `${formatNumberFa(Math.round(accuracy))} متر` : "—";
+    get("heading").textContent = direction(heading);
+    get("altitude").textContent = Number.isFinite(altitude) ? `${formatNumberFa(Math.round(altitude))} متر` : "—";
+    get("time").textContent = new Date(position.timestamp).toLocaleTimeString("fa-IR");
+    get("coords").textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+    get("error").textContent = "";
+    setStatus("GPS فعال است", true);
+  };
+  const start = () => {
+    if (!navigator.geolocation) {
+      get("error").textContent = "مرورگر شما امکان دریافت موقعیت مکانی را ندارد.";
+      setStatus("GPS در دسترس نیست");
+      return;
+    }
+    if (state.watchId !== null) return;
+    state.startedAt = Date.now();
+    state.watchId = navigator.geolocation.watchPosition(updatePosition, (error) => {
+      const messages = {
+        1: "دسترسی به موقعیت مکانی رد شد. مجوز GPS مرورگر را فعال کنید.",
+        2: "موقعیت مکانی فعلاً در دسترس نیست.",
+        3: "دریافت موقعیت مکانی بیش از حد طول کشید.",
+      };
+      get("error").textContent = messages[error.code] || "خطا در دریافت موقعیت مکانی.";
+      setStatus("خطا در دریافت GPS");
+    }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 });
+    setStatus("در حال دریافت GPS", true);
+  };
+  root.querySelector('[data-gps-action="start"]').addEventListener("click", start);
+  root.querySelector('[data-gps-action="reset"]').addEventListener("click", () => {
+    state.distanceMeters = 0;
+    state.lastPosition = null;
+    get("distance").textContent = "۰ متر";
+  });
+  const onlineHandler = () => { get("network").textContent = navigator.onLine ? "متصل" : "قطع"; };
+  window.addEventListener("online", onlineHandler);
+  window.addEventListener("offline", onlineHandler);
+  return () => {
+    if (state.watchId !== null) navigator.geolocation?.clearWatch(state.watchId);
+    window.removeEventListener("online", onlineHandler);
+  };
+}
+
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const earthRadius = 6371000;
+  const toRadians = (value) => value * Math.PI / 180;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 /* ==================================================
@@ -1078,6 +1210,7 @@ async function renderCarFormPage(params, root) {
         otherSpecTitle: "",
         currentKm: "",
         dailyKm: "",
+        gpsOdometerEnabled: false,
         photo: null,
         wantsPlate: true,
         inspection: null,
@@ -1177,6 +1310,16 @@ async function renderCarFormPage(params, root) {
           <input type="tel" inputmode="numeric" class="text-input" id="daily-km-input" value="${state.dailyKm ? formatNumberFa(state.dailyKm) : ""}" />
           <p class="field__hint" id="monthly-km-hint"></p>
         </div>
+      </div>
+      <div class="gps-form-option">
+        <label class="field__checkbox-label">
+          <input type="checkbox" id="gps-odometer-checkbox" ${state.gpsOdometerEnabled ? "checked" : ""} />
+          <span>دریافت کیلومتر خودرو از طریق GPS (آزمایشی)</span>
+        </label>
+        <button type="button" class="btn btn--secondary btn--small" id="open-gps-test-btn">
+          <span class="sf">${acIcon("work-mode-trip")}</span>
+          باز کردن صفحه GPS
+        </button>
       </div>
 
       <div class="field">
@@ -1681,6 +1824,14 @@ async function renderCarFormPage(params, root) {
   bindThousandsInput(dailyInput, (raw) => {
     dailyKmRaw = raw;
     updateMonthlyHint();
+    root.querySelector("#gps-odometer-checkbox").addEventListener("change", (e) => {
+      state.gpsOdometerEnabled = e.target.checked;
+    });
+    root.querySelector("#open-gps-test-btn").addEventListener("click", () => {
+      state.gpsOdometerEnabled = true;
+      root.querySelector("#gps-odometer-checkbox").checked = true;
+      window.open("#/gps", "_blank", "noopener");
+    });
   });
   updateMonthlyHint();
 
@@ -2016,6 +2167,7 @@ async function renderCarFormPage(params, root) {
     }
     state.currentKm = currentKmRaw || 0;
     state.dailyKm = dailyKmRaw || "";
+    state.gpsOdometerEnabled = root.querySelector("#gps-odometer-checkbox").checked;
     if (!state.kmUpdatedAt) state.kmUpdatedAt = todayJalaliStr();
     state.updatedAt = new Date().toISOString();
     if (!state.createdAt) state.createdAt = new Date().toISOString();
@@ -3786,26 +3938,40 @@ const REPORT_RANGE_OPTIONS = [
   { value: "3m", label: "۳ ماه اخیر" },
   { value: "6m", label: "۶ ماه اخیر" },
   { value: "year", label: "امسال" },
+  { value: "custom", label: "بازه دلخواه" },
   { value: "all", label: "همه" },
 ];
 
-function filterServicesByRange(services, range) {
+function filterServicesByRange(services, range, customRange = {}) {
   if (range === "all") return services;
+  if (range === "custom") {
+    const from = jalaliStrToDate(customRange.from);
+    const to = jalaliStrToDate(customRange.to);
+    if (!from || !to || from > to) return [];
+    to.setHours(23, 59, 59, 999);
+    return services.filter((s) => {
+      const date = jalaliStrToDate(toEnDigits(String(s.date || "")));
+      return date && date >= from && date <= to;
+    });
+  }
   const [currentYear, currentMonth] = todayJalaliStr().split("/").map(Number);
   const currentMonthIndex = currentYear * 12 + currentMonth - 1;
   if (range === "month") {
     return services.filter((s) => {
-      const [year, month] = String(s.date || "").split("/").map(Number);
+      const [year, month] = toEnDigits(String(s.date || "")).split("/").map(Number);
       return year === currentYear && month === currentMonth;
     });
   }
   if (range === "year") {
-    return services.filter((s) => String(s.date || "").startsWith(`${currentYear}/`));
+    return services.filter((s) => {
+      const [year] = toEnDigits(String(s.date || "")).split("/").map(Number);
+      return year === currentYear;
+    });
   }
   const months = range === "3m" ? 3 : 6;
   const cutoffMonthIndex = currentMonthIndex - months + 1;
   return services.filter((s) => {
-    const [year, month] = String(s.date || "").split("/").map(Number);
+    const [year, month] = toEnDigits(String(s.date || "")).split("/").map(Number);
     if (!year || !month) return false;
     const monthIndex = year * 12 + month - 1;
     return monthIndex >= cutoffMonthIndex && monthIndex <= currentMonthIndex;
@@ -3820,26 +3986,26 @@ function serviceCostBreakdown(s) {
   return { oil, items, goods, general };
 }
 
-function isDateInReportRange(date, range) {
+function isDateInReportRange(date, range, customRange) {
   if (!date) return range === "all";
-  return filterServicesByRange([{ date }], range).length > 0;
+  return filterServicesByRange([{ date }], range, customRange).length > 0;
 }
 
-function getCarExpenseEntries(car, range) {
+function getCarExpenseEntries(car, range, customRange) {
   const entries = [];
   const insurance = car.insurance || {};
   const payments = insurance.payments || {};
   Object.values(payments).forEach((payment) => {
     const amount = Number(payment && payment.amount) || 0;
     const date = (payment && payment.date) || insurance.fromDate || "";
-    if (amount > 0 && isDateInReportRange(date, range)) {
+    if (amount > 0 && payment && payment.paid !== false && isDateInReportRange(date, range, customRange)) {
       entries.push({ category: "insurance", amount, date });
     }
   });
 
   const inspection = car.inspection || {};
   const inspectionCost = Number(inspection.cost) || 0;
-  if (inspectionCost > 0 && isDateInReportRange(inspection.date, range)) {
+  if (inspectionCost > 0 && isDateInReportRange(inspection.date, range, customRange)) {
     entries.push({ category: "inspection", amount: inspectionCost, date: inspection.date });
   }
   return entries;
@@ -3851,12 +4017,13 @@ async function renderReportsPage(params, root) {
 
   const [cars, allServices] = await Promise.all([CarsAPI.getAll(), ServicesAPI.getAll()]);
 
-  const state = { carId: "", range: "all" };
+  const state = { carId: "", range: "all", customFrom: "", customTo: "" };
 
   root.innerHTML = `
     <header class="page-header page-header--form">
       <a href="#/dashboard" class="page-header__back sf">${acIcon("chevron-right")}</a>
       <h1>گزارش هزینه</h1>
+      <button type="button" class="page-header__action report-info-btn" aria-label="توضیحات گزارش هزینه">${acIcon("info")}</button>
     </header>
     <div class="list-controls-row">
       <div class="report-car-combo"></div>
@@ -3866,6 +4033,47 @@ async function renderReportsPage(params, root) {
   `;
 
   const bodyEl = root.querySelector(".report-body");
+
+  root.querySelector(".report-info-btn").addEventListener("click", () => {
+    openSheet({
+      title: "راهنمای گزارش هزینه",
+      size: "default",
+      contentHTML: `
+        <div class="report-help">
+          <p class="report-help__intro">اینجا می‌توانید ببینید برای خودروهایتان چقدر هزینه کرده‌اید و این هزینه‌ها از چه بخش‌هایی تشکیل شده‌اند.</p>
+          <h3>هر دسته یعنی چه؟</h3>
+          <div class="report-help__item">
+            <strong>تعویض روغن</strong>
+            <span>هزینه‌ای که برای تعویض روغن در یک سرویس وارد کرده‌اید.</span>
+          </div>
+          <div class="report-help__item">
+            <strong>خدمات سرویس</strong>
+            <span>هزینه کارهایی که در بخش «خدمات سرویس» ثبت کرده‌اید؛ مثل تعویض فیلتر، لنت، دیاگ یا یک تعمیر مشخص.</span>
+          </div>
+          <div class="report-help__item">
+            <strong>کالا و لوازم</strong>
+            <span>هزینه قطعات و لوازمی که برای سرویس خریده‌اید و در بخش «کالا و لوازم» وارد کرده‌اید.</span>
+          </div>
+          <div class="report-help__item">
+            <strong>هزینه کلی سرویس</strong>
+            <span>وقتی فقط مبلغ نهایی یک سرویس را وارد کرده‌اید و جزئیات آن را جداگانه ثبت نکرده‌اید.</span>
+          </div>
+          <div class="report-help__item">
+            <strong>بیمه‌نامه</strong>
+            <span>مبلغ قسط‌ها یا پرداخت‌هایی که برای بیمه انجام داده‌اید. قسط‌های پرداخت‌نشده حساب نمی‌شوند.</span>
+          </div>
+          <div class="report-help__item">
+            <strong>معاینه فنی</strong>
+            <span>هزینه‌ای که برای معاینه فنی خودرو ثبت کرده‌اید.</span>
+          </div>
+          <h3>فیلترها چطور کار می‌کنند؟</h3>
+          <p class="report-help__note">با انتخاب خودرو، فقط هزینه‌های همان خودرو را می‌بینید. با انتخاب بازه زمانی، نمودار و تفکیک هزینه‌ها برای همان بازه به‌روزرسانی می‌شوند.</p>
+          <p class="report-help__note">کارت‌های آماری بالای صفحه همیشه مجموع همه هزینه‌های ثبت‌شده را نشان می‌دهند.</p>
+          <p class="report-help__note">برای بررسی یک بازه مشخص، «بازه دلخواه» را انتخاب کنید و ابتدا تاریخ شروع و بعد تاریخ پایان را وارد کنید.</p>
+        </div>
+      `,
+    });
+  });
 
   root.querySelector(".report-car-combo").appendChild(
     createCombobox({
@@ -3882,64 +4090,100 @@ async function renderReportsPage(params, root) {
       value: state.range,
       placeholder: "بازه زمانی",
       searchable: false,
-      onSelect: (item) => { state.range = item.value; renderReport(); },
+      onSelect: (item) => {
+        state.range = item.value;
+        if (item.value === "custom") {
+          openCustomRange();
+        } else {
+          renderReport();
+        }
+      },
     }),
   );
 
+  function openCustomRange() {
+    openJalaliDatePicker({
+      value: state.customFrom || todayJalaliStr(),
+      onSelect: (from) => {
+        state.customFrom = from;
+        openJalaliDatePicker({
+          value: state.customTo || from,
+          onSelect: (to) => {
+            const fromDate = jalaliStrToDate(from);
+            const toDate = jalaliStrToDate(to);
+            if (!fromDate || !toDate || fromDate > toDate) {
+              showToast("تاریخ پایان باید بعد از تاریخ شروع باشد", "error");
+              state.customFrom = "";
+              state.customTo = "";
+              state.range = "all";
+              renderReport();
+              return;
+            }
+            state.customTo = to;
+            renderReport();
+          },
+        });
+      },
+    });
+  }
+
   function renderReport() {
-    let filtered = allServices;
-    if (state.carId) filtered = filtered.filter((s) => s.carId === state.carId);
-    filtered = filterServicesByRange(filtered, state.range);
+    let allFiltered = allServices;
+    if (state.carId) allFiltered = allFiltered.filter((s) => s.carId === state.carId);
+    let filtered = filterServicesByRange(allFiltered, state.range, {
+      from: state.customFrom,
+      to: state.customTo,
+    });
 
     const selectedCars = state.carId
       ? cars.filter((car) => String(car.id) === String(state.carId))
       : cars;
-    const carExpenseEntries = selectedCars.flatMap((car) => getCarExpenseEntries(car, state.range));
-
-    if (!filtered.length && !carExpenseEntries.length) {
-      bodyEl.innerHTML = `
-        <div class="empty-state">
-          <span class="empty-state__icon sf">${acIcon("money")}</span>
-          <h2>سرویسی در این بازه یافت نشد</h2>
-          <p>فیلترها را تغییر دهید یا سرویس جدیدی ثبت کنید.</p>
-        </div>`;
-      return;
-    }
-
-    const serviceTotal = filtered.reduce((sum, s) => sum + getServiceTotalCost(s), 0);
-    const totalCost = serviceTotal + carExpenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
-    const avgCost = filtered.length ? Math.round(serviceTotal / filtered.length) : 0;
-    const maxService = filtered[0]
-      ? filtered.reduce((max, s) => getServiceTotalCost(s) > getServiceTotalCost(max) ? s : max, filtered[0])
+    const carExpenseEntries = selectedCars.flatMap((car) => getCarExpenseEntries(car, state.range, {
+      from: state.customFrom,
+      to: state.customTo,
+    }));
+    const allCarExpenseEntries = selectedCars.flatMap((car) => getCarExpenseEntries(car, "all"));
+    const allServiceTotal = allFiltered.reduce((sum, s) => sum + getServiceTotalCost(s), 0);
+    const allTotalCost = allServiceTotal + allCarExpenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const avgCost = allFiltered.length ? Math.round(allServiceTotal / allFiltered.length) : 0;
+    const maxService = allFiltered[0]
+      ? allFiltered.reduce((max, s) => getServiceTotalCost(s) > getServiceTotalCost(max) ? s : max, allFiltered[0])
       : null;
 
     // سطرهای نمودار ماهانه
+    const reportCategoryRows = [
+      { key: "oil", label: "تعویض روغن", color: "#ff454b" },
+      { key: "items", label: "خدمات سرویس", color: "#ff922f" },
+      { key: "goods", label: "کالا و لوازم", color: "#ffd60a" },
+      { key: "general", label: "هزینه کلی سرویس", color: "#30d158" },
+      { key: "insurance", label: "بیمه‌نامه", color: "#18c5b8" },
+      { key: "inspection", label: "معاینه فنی", color: "#24c7e8" },
+    ];
     const monthMap = new Map();
     filtered.forEach((s) => {
-      const key = (s.date || "").slice(0, 7);
+      const key = toEnDigits(s.date || "").slice(0, 7);
       if (!key) return;
       monthMap.set(key, (monthMap.get(key) || 0) + getServiceTotalCost(s));
     });
     carExpenseEntries.forEach((entry) => {
-      const key = (entry.date || "").slice(0, 7);
+      const key = toEnDigits(entry.date || "").slice(0, 7);
       if (!key) return;
       monthMap.set(key, (monthMap.get(key) || 0) + entry.amount);
     });
     const monthKeys = [...monthMap.keys()].sort();
     const maxMonthVal = Math.max(...monthKeys.map((k) => monthMap.get(k)), 1);
-
-    const barsHTML = monthKeys.map((key) => {
-      const [jy, jm] = key.split("/");
+    const chartBars = monthKeys.map((key) => {
+      const [, jm] = key.split("/");
       const monthLabel = JALALI_MONTHS[Number(jm) - 1] || jm;
-      const val = monthMap.get(key);
-      const heightPct = Math.max(4, Math.round((val / maxMonthVal) * 100));
+      const [jy] = key.split("/");
+      const total = monthMap.get(key);
       return `
-        <div class="report-chart__col">
-          <span class="report-chart__value">${val ? formatToman(val) : ""}</span>
-          <div class="report-chart__bar-track">
-            <div class="report-chart__bar" style="height:${heightPct}%"></div>
+        <div class="report-chart__column">
+          <strong>${formatToman(total)}</strong>
+          <div class="report-chart__bar">
+            <span class="report-chart__segment" style="height:${(total / maxMonthVal) * 100}%"></span>
           </div>
-          <span class="report-chart__label">${monthLabel}</span>
+          <span>${monthLabel} ${toFaDigits(jy)}</span>
         </div>`;
     }).join("");
 
@@ -3956,27 +4200,27 @@ async function renderReportsPage(params, root) {
       breakdown[entry.category] += entry.amount;
     });
     const breakdownTotal = Object.values(breakdown).reduce((sum, value) => sum + value, 0) || 1;
-    const breakdownRows = [
-      { key: "oil", label: "تعویض روغن", value: breakdown.oil, color: "#ff454b" },
-      { key: "items", label: "خدمات سرویس", value: breakdown.items, color: "#ff922f" },
-      { key: "goods", label: "کالا و لوازم", value: breakdown.goods, color: "#ffd60a" },
-      { key: "general", label: "هزینه‌های متفرقه", value: breakdown.general, color: "#30d158" },
-      { key: "insurance", label: "بیمه‌نامه", value: breakdown.insurance, color: "#18c5b8" },
-      { key: "inspection", label: "معاینه فنی", value: breakdown.inspection, color: "#24c7e8" },
-    ].filter((r) => r.value > 0);
+    const breakdownRows = reportCategoryRows.map((row) => ({
+      ...row,
+      value: breakdown[row.key],
+    })).filter((r) => r.value > 0);
     const breakdownBar = breakdownRows.map((r) =>
-      `<span class="report-breakdown__segment" style="width:${(r.value / breakdownTotal) * 100}%;background:${r.color}" title="${r.label}"></span>`
+      `<span class="report-breakdown__segment" style="flex-basis:${(r.value / breakdownTotal) * 100}%;background:${r.color}" title="${r.label}" aria-label="${r.label}"></span>`
     ).join("");
+    const breakdownTitle = state.carId
+      ? selectedCars[0]?.brandModel || "خودرو"
+      : "همه خودروها";
+    const breakdownUsedLabel = `جمع ${formatToman(allTotalCost)}`;
 
     bodyEl.innerHTML = `
       <div class="report-stats-grid">
         <div class="report-stat-card">
-          <span class="report-stat-card__label">جمع کل هزینه</span>
-          <span class="report-stat-card__value">${formatToman(totalCost)}</span>
+          <span class="report-stat-card__label">جمع کل هزینه‌های خودرو</span>
+          <span class="report-stat-card__value">${formatToman(allTotalCost)}</span>
         </div>
         <div class="report-stat-card">
           <span class="report-stat-card__label">تعداد سرویس</span>
-          <span class="report-stat-card__value">${toFaDigits(filtered.length)}</span>
+          <span class="report-stat-card__value">${toFaDigits(allFiltered.length)}</span>
         </div>
         <div class="report-stat-card">
           <span class="report-stat-card__label">میانگین هر سرویس</span>
@@ -3987,25 +4231,37 @@ async function renderReportsPage(params, root) {
           <span class="report-stat-card__value">${formatToman(maxService ? getServiceTotalCost(maxService) : 0)}</span>
         </div>
       </div>
+      <p class="report-stats-note">این مبلغ شامل سرویس‌ها، بیمه‌های پرداخت‌شده و هزینه معاینه فنی است.</p>
 
       <section class="section-block">
         <div class="section-block__header"><h2>روند هزینه ماهانه</h2></div>
-        <div class="card report-chart">
-          ${barsHTML}
+        <div class="card report-chart" data-layer="Simple Area">
+          <div class="report-chart__grid">
+            <div class="report-chart__columns" role="img" aria-label="جمع هزینه ماهانه">
+              ${chartBars}
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="section-block">
         <div class="section-block__header"><h2>تفکیک هزینه‌ها</h2></div>
-        <div class="card report-breakdown">
-          <div class="report-breakdown__bar">${breakdownBar}</div>
-          ${breakdownRows.map((r) => `
-            <div class="report-breakdown__row">
-              <div class="report-breakdown__row-head">
-                <span class="report-breakdown__label"><i style="background:${r.color}"></i>${r.label}</span>
-                <span>${formatToman(r.value)}</span>
-              </div>
-            </div>`).join("")}
+        <div class="card report-breakdown" data-layer="Example/Stockage Bar">
+          <div class="report-breakdown__text">
+            <span class="report-breakdown__title">${escapeHtml(breakdownTitle)}</span>
+            <span class="report-breakdown__used">${escapeHtml(breakdownUsedLabel)}</span>
+          </div>
+          <div class="report-breakdown__bar" role="img" aria-label="تفکیک دسته‌بندی هزینه‌ها">
+            ${breakdownBar}
+          </div>
+          <div class="report-breakdown__legend">
+            ${breakdownRows.map((r) => `
+              <span class="report-breakdown__legend-item">
+                <i class="report-breakdown__legend-dot" style="background:${r.color}"></i>
+                <span>${r.label}</span>
+                <strong>${formatToman(r.value)}</strong>
+              </span>`).join("")}
+          </div>
         </div>
       </section>
     `;
