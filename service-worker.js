@@ -3,7 +3,7 @@
  * فعال‌سازی حالت آفلاین کامل با کش‌گذاری Cache-First برای پوسته برنامه
  */
 
-const CACHE_VERSION = 'car-service-cache-v15';
+const CACHE_VERSION = 'car-service-cache-v13';
 
 const APP_SHELL_FILES = [
   './',

@@ -135,28 +135,28 @@ const CAR_COLORS = [
 /** رنگ وضعیت خدمات سرویس — بر پایه سیستم رنگ تک‌رنگ + وضعیت‌های success/warning — قابل گسترش */
 const SERVICE_STATUS_COLORS = {
   // ✅ سبز (success) — انجام موفق / تعویض / تکمیل شده
-  "تعویض شد":   { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
-  "انجام شد":   { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
-  "تعمیر شد":   { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
-  "تعویض":      { bg: "rgba(52, 199, 89, 0.14)",  fg: "#34c759" },
+  "تعویض شد": { bg: "rgba(52, 199, 89, 0.14)", fg: "#34c759" },
+  "انجام شد": { bg: "rgba(52, 199, 89, 0.14)", fg: "#34c759" },
+  "تعمیر شد": { bg: "rgba(52, 199, 89, 0.14)", fg: "#34c759" },
+  تعویض: { bg: "rgba(52, 199, 89, 0.14)", fg: "#34c759" },
 
   // 🟠 کهربایی (warning) — نیاز به توجه / بازدید
-  "بازدید شد":  { bg: "rgba(255, 141, 40, 0.14)",  fg: "#ff8d28" },
-  "بازدید":     { bg: "rgba(255, 141, 40, 0.14)",  fg: "#ff8d28" },
-  "باد معمولی": { bg: "rgba(255, 141, 40, 0.14)",  fg: "#ff8d28" },
+  "بازدید شد": { bg: "rgba(255, 141, 40, 0.14)", fg: "#ff8d28" },
+  بازدید: { bg: "rgba(255, 141, 40, 0.14)", fg: "#ff8d28" },
+  "باد معمولی": { bg: "rgba(255, 141, 40, 0.14)", fg: "#ff8d28" },
 
   // ⚫ مشکی خنثی — اضافه کردن / شارژ / اقدام کمکی (بدون رنگ برند)
-  "اضافه شد":   { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
-  "شارژ شد":    { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
-  "نیتروژن":    { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
-  "شستشو":      { bg: "rgba(0, 136, 255, 0.14)",  fg: "#0088ff" },
+  "اضافه شد": { bg: "rgba(0, 136, 255, 0.14)", fg: "#0088ff" },
+  "شارژ شد": { bg: "rgba(0, 136, 255, 0.14)", fg: "#0088ff" },
+  نیتروژن: { bg: "rgba(0, 136, 255, 0.14)", fg: "#0088ff" },
+  شستشو: { bg: "rgba(0, 136, 255, 0.14)", fg: "#0088ff" },
 
   // ⚪ خاکستری میانه — تعداد / کمیت
-  "4 حلقه":     { bg: "rgba(203, 48, 224, 0.14)", fg: "#cb30e0" },
-  "2 حلقه":     { bg: "rgba(203, 48, 224, 0.14)", fg: "#cb30e0" },
+  "4 حلقه": { bg: "rgba(203, 48, 224, 0.14)", fg: "#cb30e0" },
+  "2 حلقه": { bg: "rgba(203, 48, 224, 0.14)", fg: "#cb30e0" },
 
   // ⚪ خاکستری — پیش‌فرض / ناشناخته
-  _default:     { bg: "rgba(99, 99, 102, 0.14)", fg: "var(--label-secondary)" },
+  _default: { bg: "rgba(99, 99, 102, 0.14)", fg: "var(--label-secondary)" },
 };
 
 function getServiceStatusColor(status) {
@@ -189,7 +189,10 @@ function createEmptyInsurance() {
     fromDate: "",
     toDate: "",
     payments: Object.fromEntries(
-      INS_PAYMENT_ROWS.map(({ key }) => [key, { amount: "", date: "", paid: false }]),
+      INS_PAYMENT_ROWS.map(({ key }) => [
+        key,
+        { amount: "", date: "", paid: false },
+      ]),
     ),
   };
 }
@@ -206,12 +209,16 @@ function updateThemeColor(mode) {
   document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
     meta.setAttribute("content", color);
   });
-  document.querySelectorAll('meta[name="mobile-web-app-status-bar-style"]').forEach((meta) => {
-    meta.setAttribute("content", dark ? "black-translucent" : "default");
-  });
-  document.querySelectorAll('meta[name="apple-mobile-web-app-status-bar-style"]').forEach((meta) => {
-    meta.setAttribute("content", dark ? "black-translucent" : "default");
-  });
+  document
+    .querySelectorAll('meta[name="mobile-web-app-status-bar-style"]')
+    .forEach((meta) => {
+      meta.setAttribute("content", dark ? "black-translucent" : "default");
+    });
+  document
+    .querySelectorAll('meta[name="apple-mobile-web-app-status-bar-style"]')
+    .forEach((meta) => {
+      meta.setAttribute("content", dark ? "black-translucent" : "default");
+    });
   document.querySelectorAll('meta[name="color-scheme"]').forEach((meta) => {
     meta.setAttribute("content", dark ? "dark" : "light");
   });
@@ -221,7 +228,10 @@ function updateThemeColor(mode) {
     systemThemeMediaQuery = prefersDark;
     systemThemeMediaQuery.addEventListener("change", () => {
       const root = document.documentElement;
-      if (!root.classList.contains("theme-light") && !root.classList.contains("theme-dark")) {
+      if (
+        !root.classList.contains("theme-light") &&
+        !root.classList.contains("theme-dark")
+      ) {
         updateThemeColor("auto");
       }
     });
@@ -293,204 +303,7 @@ function registerAllRoutes() {
   registerRoute("#/services/:id/edit", renderServiceFormPage);
   registerRoute("#/maintenance", renderMaintenancePage);
   registerRoute("#/reports", renderReportsPage);
-  registerRoute("#/gps", renderGpsPage);
   registerRoute("#/settings", renderSettingsPage);
-}
-
-async function renderGpsPage(params, root) {
-  document.getElementById("tab-bar")?.remove();
-  removeFab();
-
-  const query = new URLSearchParams(window.location.hash.split("?")[1] || "");
-  const selectedCar = query.get("carId") ? await CarsAPI.getById(query.get("carId")) : null;
-  const cars = await CarsAPI.getAll();
-  const state = {
-    watchId: null,
-    startedAt: null,
-    lastPosition: null,
-    distanceMeters: 0,
-    baseKm: selectedCar ? Number(selectedCar.currentKm) || 0 : null,
-    lastSavedKm: selectedCar ? Number(selectedCar.currentKm) || 0 : null,
-    savingKm: false,
-    position: null,
-    error: "",
-  };
-
-  root.innerHTML = `
-    <header class="page-header page-header--form">
-      <a href="${selectedCar ? `#/cars/${encodeURIComponent(selectedCar.id)}/edit` : "#/cars"}" class="page-header__back sf" aria-label="بازگشت">${acIcon("chevron-right")}</a>
-      <h1>آزمایش GPS خودرو</h1>
-    </header>
-    <div class="gps-page">
-      <div class="gps-status-card">
-        <div class="gps-status-card__row">
-          <span class="gps-status-card__dot"></span>
-          <strong class="gps-status-card__status" data-gps="status">آماده شروع</strong>
-        </div>
-        <p class="gps-status-card__hint" data-gps="hint">برای شروع، دکمه دریافت GPS را بزنید و اجازه دسترسی به موقعیت مکانی را تأیید کنید.</p>
-      </div>
-      <div class="gps-details card">
-        <h2>خودروی این تست</h2>
-        <p><span>خودرو</span><strong data-gps="car">${selectedCar ? escapeHtml(selectedCar.brandModel || "خودرو") : "خودرویی انتخاب نشده"}</strong></p>
-        <p><span>کیلومتر فعلی</span><strong data-gps="odometer">${selectedCar ? formatKm(selectedCar.currentKm) : "—"}</strong></p>
-        <p><span>خودروهای ثبت‌شده</span><strong>${toFaDigits(cars.length)}</strong></p>
-      </div>
-      <div class="gps-metrics">
-        <div class="gps-metric gps-metric--primary"><span>مسافت این تست</span><strong data-gps="distance">۰ متر</strong></div>
-        <div class="gps-metric"><span>سرعت</span><strong data-gps="speed">—</strong></div>
-        <div class="gps-metric"><span>دقت موقعیت</span><strong data-gps="accuracy">—</strong></div>
-        <div class="gps-metric"><span>جهت حرکت</span><strong data-gps="heading">—</strong></div>
-        <div class="gps-metric"><span>ارتفاع</span><strong data-gps="altitude">—</strong></div>
-        <div class="gps-metric"><span>آخرین دریافت</span><strong data-gps="time">—</strong></div>
-      </div>
-      <div class="gps-details card">
-        <h2>وضعیت اتصال</h2>
-        <p><span>اینترنت</span><strong data-gps="network">${navigator.onLine ? "متصل" : "قطع"}</strong></p>
-        <p><span>GPS مرورگر</span><strong data-gps="support">${navigator.geolocation ? "پشتیبانی می‌شود" : "پشتیبانی نمی‌شود"}</strong></p>
-        <p><span>مختصات</span><strong data-gps="coords">—</strong></p>
-      </div>
-      <p class="gps-error" data-gps="error"></p>
-      <div class="gps-actions">
-        <button type="button" class="btn btn--primary btn--block" data-gps-action="start">شروع دریافت GPS</button>
-        <button type="button" class="btn btn--secondary btn--block" data-gps-action="stop" disabled>توقف دریافت GPS</button>
-        <button type="button" class="btn btn--secondary btn--block" data-gps-action="reset">صفر کردن مسافت</button>
-      </div>
-      <p class="gps-note">${selectedCar
-        ? "مسافت معتبر GPS به‌صورت خودکار به کیلومتر فعلی همین خودرو اضافه و ذخیره می‌شود. برای توقف موقت، دکمه توقف را بزنید."
-        : "برای به‌روزرسانی خودکار کیلومتر، GPS را از صفحه ویرایش یک خودروی ذخیره‌شده باز کنید."}</p>
-    </div>
-  `;
-
-  const get = (key) => root.querySelector(`[data-gps="${key}"]`);
-  const setStatus = (text, active = false) => {
-    get("status").textContent = text;
-    root.querySelector(".gps-status-card__dot").classList.toggle("is-active", active);
-  };
-  const formatDistance = (meters) => meters >= 1000
-    ? `${formatNumberFa((meters / 1000).toFixed(2))} کیلومتر`
-    : `${formatNumberFa(Math.round(meters))} متر`;
-  const direction = (heading) => {
-    if (!Number.isFinite(heading)) return "—";
-    const names = ["شمال", "شمال‌شرق", "شرق", "جنوب‌شرق", "جنوب", "جنوب‌غرب", "غرب", "شمال‌غرب"];
-    return `${names[Math.round(heading / 45) % 8]} (${toFaDigits(Math.round(heading))}°)`;
-  };
-  const updatePosition = (position) => {
-    const { latitude, longitude, accuracy, altitude, heading, speed } = position.coords;
-    if (state.lastPosition) {
-      const segment = haversineMeters(
-        state.lastPosition.latitude,
-        state.lastPosition.longitude,
-        latitude,
-        longitude,
-      );
-      const currentAccuracy = Number.isFinite(accuracy) ? accuracy : 999;
-      const previousAccuracy = Number.isFinite(state.lastPosition.accuracy)
-        ? state.lastPosition.accuracy
-        : currentAccuracy;
-      const speedMps = Number.isFinite(speed) ? speed : null;
-      const minimumSegment = Math.max(15, currentAccuracy * 1.25, previousAccuracy * 1.25);
-      const isMoving = speedMps !== null
-        ? speedMps >= 2
-        : false;
-      if (isMoving && segment >= minimumSegment) {
-        state.distanceMeters += segment;
-        state.lastPosition = { latitude, longitude, accuracy };
-        if (selectedCar) {
-          const updatedKm = Math.floor((state.baseKm * 1000 + state.distanceMeters) / 1000);
-          if (updatedKm > state.lastSavedKm && !state.savingKm) {
-            state.savingKm = true;
-            selectedCar.currentKm = updatedKm;
-            selectedCar.kmUpdatedAt = todayJalaliStr();
-            selectedCar.updatedAt = new Date().toISOString();
-            CarsAPI.save(selectedCar)
-              .then(() => {
-                state.lastSavedKm = updatedKm;
-                state.savingKm = false;
-                get("odometer").textContent = formatKm(updatedKm);
-              })
-              .catch(() => {
-                state.savingKm = false;
-                selectedCar.currentKm = state.lastSavedKm;
-                get("error").textContent = "ذخیره کیلومتر خودرو انجام نشد؛ دوباره تلاش کنید.";
-                setStatus("خطا در ذخیره کیلومتر");
-              });
-          }
-        }
-      }
-    } else {
-      state.lastPosition = { latitude, longitude, accuracy };
-    }
-    state.position = position;
-    get("distance").textContent = formatDistance(state.distanceMeters);
-    get("speed").textContent = Number.isFinite(speed) && speed >= 2
-      ? `${formatNumberFa((speed * 3.6).toFixed(1))} کیلومتر/ساعت`
-      : "۰ کیلومتر/ساعت";
-    get("accuracy").textContent = Number.isFinite(accuracy) ? `${formatNumberFa(Math.round(accuracy))} متر` : "—";
-    get("heading").textContent = Number.isFinite(speed) && speed >= 2 ? direction(heading) : "ثابت";
-    get("altitude").textContent = Number.isFinite(altitude) ? `${formatNumberFa(Math.round(altitude))} متر` : "—";
-    get("time").textContent = new Date(position.timestamp).toLocaleTimeString("fa-IR");
-    get("coords").textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-    get("error").textContent = "";
-    get("hint").textContent = "موقعیت دریافت شد. برای اندازه‌گیری واقعی، با خودرو حرکت کنید.";
-    setStatus("GPS فعال است", true);
-  };
-  const start = () => {
-    if (!navigator.geolocation) {
-      get("error").textContent = "مرورگر شما امکان دریافت موقعیت مکانی را ندارد.";
-      setStatus("GPS در دسترس نیست");
-      return;
-    }
-    if (state.watchId !== null) return;
-    root.querySelector('[data-gps-action="start"]').disabled = true;
-    root.querySelector('[data-gps-action="stop"]').disabled = false;
-    state.lastPosition = null;
-    state.startedAt = Date.now();
-    state.watchId = navigator.geolocation.watchPosition(updatePosition, (error) => {
-      const messages = {
-        1: "دسترسی به موقعیت مکانی رد شد. مجوز GPS مرورگر را فعال کنید.",
-        2: "موقعیت مکانی فعلاً در دسترس نیست.",
-        3: "دریافت موقعیت مکانی بیش از حد طول کشید.",
-      };
-      get("error").textContent = messages[error.code] || "خطا در دریافت موقعیت مکانی.";
-      setStatus("خطا در دریافت GPS");
-    }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 });
-    setStatus("در حال دریافت GPS", true);
-    get("hint").textContent = "در انتظار اولین موقعیت معتبر گوشی هستیم...";
-  };
-  const stop = () => {
-    if (state.watchId === null) return;
-    navigator.geolocation.clearWatch(state.watchId);
-    state.watchId = null;
-    state.lastPosition = null;
-    root.querySelector('[data-gps-action="start"]').disabled = false;
-    root.querySelector('[data-gps-action="stop"]').disabled = true;
-    setStatus("دریافت GPS متوقف شد");
-    get("hint").textContent = "دریافت GPS متوقف است. برای ادامه، دکمه شروع را بزنید.";
-  };
-  root.querySelector('[data-gps-action="start"]').addEventListener("click", start);
-  root.querySelector('[data-gps-action="stop"]').addEventListener("click", stop);
-  root.querySelector('[data-gps-action="reset"]').addEventListener("click", () => {
-    state.distanceMeters = 0;
-    state.lastPosition = null;
-    get("distance").textContent = "۰ متر";
-  });
-  const onlineHandler = () => { get("network").textContent = navigator.onLine ? "متصل" : "قطع"; };
-  window.addEventListener("online", onlineHandler);
-  window.addEventListener("offline", onlineHandler);
-  return () => {
-    if (state.watchId !== null) navigator.geolocation?.clearWatch(state.watchId);
-    window.removeEventListener("online", onlineHandler);
-  };
-}
-
-function haversineMeters(lat1, lon1, lat2, lon2) {
-  const earthRadius = 6371000;
-  const toRadians = (value) => value * Math.PI / 180;
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
-  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 /* ==================================================
@@ -600,9 +413,7 @@ function renderCircleGaugeHtml(title, gauge, metaLine = "") {
   const offset = c - (pct / 100) * c;
   const level = gauge && gauge.hasData ? gauge.level : "empty";
   const centerText =
-    gauge && gauge.hasData
-      ? `${toFaDigits(gauge.remainingPercent)}٪`
-      : "—";
+    gauge && gauge.hasData ? `${toFaDigits(gauge.remainingPercent)}٪` : "—";
   const sub =
     gauge && gauge.hasData
       ? gauge.overdue
@@ -752,7 +563,9 @@ async function renderDashboardPage(params, root) {
   function dashboardCarModel(car) {
     if (car.model) return car.model;
     const brandModel = String(car.brandModel || "");
-    return brandModel.includes(" - ") ? brandModel.split(" - ").slice(1).join(" - ") : brandModel;
+    return brandModel.includes(" - ")
+      ? brandModel.split(" - ").slice(1).join(" - ")
+      : brandModel;
   }
 
   function renderStrip() {
@@ -903,8 +716,10 @@ async function renderDashboardPage(params, root) {
   function docStatusFromDays(days) {
     if (days === null) return { cls: "neutral", text: "ثبت نشده" };
     if (days < 0) return { cls: "danger", text: "منقضی شده" };
-    if (days <= 14) return { cls: "danger", text: `${toFaDigits(days)} روز مانده` };
-    if (days <= 30) return { cls: "warning", text: `${toFaDigits(days)} روز مانده` };
+    if (days <= 14)
+      return { cls: "danger", text: `${toFaDigits(days)} روز مانده` };
+    if (days <= 30)
+      return { cls: "warning", text: `${toFaDigits(days)} روز مانده` };
     return { cls: "success", text: `${toFaDigits(days)} روز مانده` };
   }
 
@@ -912,7 +727,11 @@ async function renderDashboardPage(params, root) {
   function findNextDuePayment(insurance) {
     const payments = insurance.payments || {};
     const cashPayment = payments.cash;
-    if (cashPayment && (cashPayment.amount || cashPayment.date) && !cashPayment.paid) {
+    if (
+      cashPayment &&
+      (cashPayment.amount || cashPayment.date) &&
+      !cashPayment.paid
+    ) {
       return { key: "cash", label: "نقد", ...cashPayment };
     }
     for (let index = 1; index <= 12; index += 1) {
@@ -948,7 +767,9 @@ async function renderDashboardPage(params, root) {
     let payActionHTML = "";
     if (nextDue) {
       const dueDays = nextDue.date ? daysUntilJalali(nextDue.date) : null;
-      const amountText = nextDue.amount ? formatToman(nextDue.amount) : "بدون مبلغ";
+      const amountText = nextDue.amount
+        ? formatToman(nextDue.amount)
+        : "بدون مبلغ";
       if (dueDays === null) {
         insMetaHTML += ` · ${nextDue.label} · ${amountText}`;
       } else if (dueDays < 0) {
@@ -998,7 +819,11 @@ async function renderDashboardPage(params, root) {
     if (payBtn) {
       payBtn.addEventListener("click", async () => {
         const key = payBtn.getAttribute("data-pay-key");
-        if (car.insurance && car.insurance.payments && car.insurance.payments[key]) {
+        if (
+          car.insurance &&
+          car.insurance.payments &&
+          car.insurance.payments[key]
+        ) {
           const confirmed = await showAlert({
             title: "تایید پرداخت",
             message: `آیا از ثبت پرداخت ${nextDue.label} مطمئن هستید؟`,
@@ -1013,9 +838,11 @@ async function renderDashboardPage(params, root) {
         }
       });
     }
-    docsSection.querySelector(".dash-doc-card__status-btn")?.addEventListener("click", () => {
-      openInsuranceReceipt(car);
-    });
+    docsSection
+      .querySelector(".dash-doc-card__status-btn")
+      ?.addEventListener("click", () => {
+        openInsuranceReceipt(car);
+      });
   }
 
   async function renderMaintenanceSection() {
@@ -1275,7 +1102,6 @@ async function renderCarFormPage(params, root) {
         otherSpecTitle: "",
         currentKm: "",
         dailyKm: "",
-        gpsOdometerEnabled: false,
         photo: null,
         wantsPlate: true,
         inspection: null,
@@ -1296,11 +1122,15 @@ async function renderCarFormPage(params, root) {
   if (!state.insurance || typeof state.insurance !== "object") {
     state.insurance = createEmptyInsurance();
   }
-  if (!state.insurance.payments || typeof state.insurance.payments !== "object") {
+  if (
+    !state.insurance.payments ||
+    typeof state.insurance.payments !== "object"
+  ) {
     state.insurance.payments = createEmptyInsurance().payments;
   }
   INS_PAYMENT_ROWS.forEach(({ key }) => {
-    if (!state.insurance.payments[key]) state.insurance.payments[key] = { amount: "", date: "", paid: false };
+    if (!state.insurance.payments[key])
+      state.insurance.payments[key] = { amount: "", date: "", paid: false };
   });
 
   if (!state.plate || typeof state.plate !== "object") {
@@ -1342,7 +1172,19 @@ async function renderCarFormPage(params, root) {
         <div class="year-combo"></div>
       </div>
 
-      <div class="field">
+      <div class="field-row">
+        <div class="field">
+          <label class="field__label-with-icon"><span class="sf field__label-icon">${acIcon("work-mode-trip")}</span>کیلومتر فعلی</label>
+          <input type="tel" inputmode="numeric" class="text-input" id="current-km-input" value="${state.currentKm ? formatNumberFa(state.currentKm) : ""}" />
+        </div>
+        <div class="field">
+          <label class="field__label-with-icon"></span>کیلومتر تقریبی روزانه</label>
+          <input type="tel" inputmode="numeric" class="text-input" id="daily-km-input" value="${state.dailyKm ? formatNumberFa(state.dailyKm) : ""}" />
+          <p class="field__hint" id="monthly-km-hint"></p>
+        </div>
+      </div>
+
+            <div class="field">
         <button type="button" class="text-input text-input--button other-spec-trigger">
           <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
           <span class="other-spec-trigger__text">مشخصات دیگر (نوع سوخت، عنوان و تصویر)</span>
@@ -1363,28 +1205,6 @@ async function renderCarFormPage(params, root) {
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="field-row">
-        <div class="field">
-          <label class="field__label-with-icon"><span class="sf field__label-icon">${acIcon("work-mode-trip")}</span>کیلومتر فعلی</label>
-          <input type="tel" inputmode="numeric" class="text-input" id="current-km-input" value="${state.currentKm ? formatNumberFa(state.currentKm) : ""}" />
-        </div>
-        <div class="field">
-          <label class="field__label-with-icon"></span>کیلومتر تقریبی روزانه</label>
-          <input type="tel" inputmode="numeric" class="text-input" id="daily-km-input" value="${state.dailyKm ? formatNumberFa(state.dailyKm) : ""}" />
-          <p class="field__hint" id="monthly-km-hint"></p>
-        </div>
-      </div>
-      <div class="gps-form-option">
-        <label class="field__checkbox-label">
-          <input type="checkbox" id="gps-odometer-checkbox" ${state.gpsOdometerEnabled ? "checked" : ""} />
-          <span>دریافت کیلومتر خودرو از طریق GPS (آزمایشی)</span>
-        </label>
-        <button type="button" class="btn btn--secondary btn--small" id="open-gps-test-btn">
-          <span class="sf">${acIcon("work-mode-trip")}</span>
-          باز کردن صفحه GPS
-        </button>
       </div>
 
       <div class="field">
@@ -1516,7 +1336,7 @@ async function renderCarFormPage(params, root) {
       renderPlateWidget();
     });
 
-      // مدل - شیت چندسطحی: برند → سری (اختیاری) → مدل نهایی
+  // مدل - شیت چندسطحی: برند → سری (اختیاری) → مدل نهایی
   const modelComboWrap = root.querySelector(".model-combo");
 
   function applyBrandModel(brand, model) {
@@ -1635,8 +1455,7 @@ async function renderCarFormPage(params, root) {
           row.className = "combobox__row";
           const val = group[series];
           const isLeaf =
-            typeof val === "string" ||
-            (Array.isArray(val) && val.length <= 1);
+            typeof val === "string" || (Array.isArray(val) && val.length <= 1);
           row.innerHTML = isLeaf
             ? `<span>${escapeHtml(typeof val === "string" ? val : val[0] || series)}</span>`
             : `<span>${escapeHtml(series)}</span><span class="combobox__row-meta">←</span>`;
@@ -1890,19 +1709,6 @@ async function renderCarFormPage(params, root) {
     dailyKmRaw = raw;
     updateMonthlyHint();
   });
-  root.querySelector("#gps-odometer-checkbox").addEventListener("change", (e) => {
-    state.gpsOdometerEnabled = e.target.checked;
-  });
-  root.querySelector("#open-gps-test-btn").addEventListener("click", () => {
-    if (!isEdit) {
-      showToast("ابتدا خودرو را ذخیره کنید، سپس GPS را برای همان خودرو باز کنید", "error");
-      return;
-    }
-    state.gpsOdometerEnabled = true;
-    root.querySelector("#gps-odometer-checkbox").checked = true;
-    const gpsHash = `#/gps?carId=${encodeURIComponent(state.id)}`;
-    window.open(gpsHash, "_blank", "noopener");
-  });
   updateMonthlyHint();
 
   /* ---------- معاینه فنی خودرو ---------- */
@@ -1913,7 +1719,8 @@ async function renderCarFormPage(params, root) {
     state.inspection.cost ||
     state.inspection.photos.length
   );
-  let expiryManuallyEdited = !!state.inspection.expiryDate && !!state.inspection.date;
+  let expiryManuallyEdited =
+    !!state.inspection.expiryDate && !!state.inspection.date;
 
   function toggleCollapsible(trigger, panel, open) {
     trigger.classList.toggle("is-open", open);
@@ -1922,7 +1729,11 @@ async function renderCarFormPage(params, root) {
       panel.hidden = false;
     } else {
       const onEnd = (e) => {
-        if (e.propertyName !== "grid-template-rows" && e.propertyName !== "opacity") return;
+        if (
+          e.propertyName !== "grid-template-rows" &&
+          e.propertyName !== "opacity"
+        )
+          return;
         if (!panel.classList.contains("is-open")) panel.hidden = true;
         panel.removeEventListener("transitionend", onEnd);
       };
@@ -1941,38 +1752,48 @@ async function renderCarFormPage(params, root) {
     }
     toggleCollapsible(inspectionTrigger, inspectionPanel, inspectionOpen);
   });
-  root.querySelector("#inspection-reset-btn").addEventListener("click", (event) => {
-    event.stopPropagation();
-    state.inspection = { date: "", expiryDate: "", cost: "", notifyBefore: "week1", photos: [] };
-    inspectionDateBtn.textContent = "انتخاب تاریخ";
-    inspectionExpiryBtn.textContent = "انتخاب تاریخ";
-    root.querySelector("#inspection-cost-input").value = "";
-    expiryManuallyEdited = false;
-    const galleryMount = root.querySelector(".inspection-gallery-mount");
-    galleryMount.innerHTML = "";
-    galleryMount.appendChild(createPhotoGallery({
-      value: state.inspection.photos,
-      max: 3,
-      onChange: (photos) => {
-        state.inspection.photos = photos;
-      },
-    }));
-    const notifyMount = root.querySelector(".inspection-notify-combo");
-    notifyMount.innerHTML = "";
-    notifyMount.appendChild(
-      createCombobox({
-        items: INSPECTION_NOTIFY_OPTIONS,
-        value: "week1",
-        placeholder: "زمان اطلاع‌رسانی",
-        searchable: false,
-        onSelect: (item) => {
-          state.inspection.notifyBefore = item.value;
-        },
-      }),
-    );
-    inspectionTrigger.classList.remove("is-open");
-    inspectionPanel.hidden = true;
-  });
+  root
+    .querySelector("#inspection-reset-btn")
+    .addEventListener("click", (event) => {
+      event.stopPropagation();
+      state.inspection = {
+        date: "",
+        expiryDate: "",
+        cost: "",
+        notifyBefore: "week1",
+        photos: [],
+      };
+      inspectionDateBtn.textContent = "انتخاب تاریخ";
+      inspectionExpiryBtn.textContent = "انتخاب تاریخ";
+      root.querySelector("#inspection-cost-input").value = "";
+      expiryManuallyEdited = false;
+      const galleryMount = root.querySelector(".inspection-gallery-mount");
+      galleryMount.innerHTML = "";
+      galleryMount.appendChild(
+        createPhotoGallery({
+          value: state.inspection.photos,
+          max: 3,
+          onChange: (photos) => {
+            state.inspection.photos = photos;
+          },
+        }),
+      );
+      const notifyMount = root.querySelector(".inspection-notify-combo");
+      notifyMount.innerHTML = "";
+      notifyMount.appendChild(
+        createCombobox({
+          items: INSPECTION_NOTIFY_OPTIONS,
+          value: "week1",
+          placeholder: "زمان اطلاع‌رسانی",
+          searchable: false,
+          onSelect: (item) => {
+            state.inspection.notifyBefore = item.value;
+          },
+        }),
+      );
+      inspectionTrigger.classList.remove("is-open");
+      inspectionPanel.hidden = true;
+    });
   if (inspectionOpen) {
     inspectionPanel.hidden = false;
     inspectionPanel.classList.add("is-open");
@@ -1992,7 +1813,9 @@ async function renderCarFormPage(params, root) {
         inspectionDateBtn.textContent = toFaDigits(d);
         if (!expiryManuallyEdited) {
           state.inspection.expiryDate = addOneJalaliYear(d);
-          inspectionExpiryBtn.textContent = toFaDigits(state.inspection.expiryDate);
+          inspectionExpiryBtn.textContent = toFaDigits(
+            state.inspection.expiryDate,
+          );
         }
       },
     });
@@ -2043,19 +1866,23 @@ async function renderCarFormPage(params, root) {
     }
     toggleCollapsible(insuranceTrigger, insurancePanel, insuranceOpen);
   });
-  root.querySelector("#insurance-reset-btn").addEventListener("click", (event) => {
-    event.stopPropagation();
-    state.insurance = createEmptyInsurance();
-    insFromBtn.textContent = "انتخاب تاریخ";
-    insToBtn.textContent = "انتخاب تاریخ";
-    insuranceToManuallyEdited = false;
-    activeInstallmentCount = 0;
-    renderPaymentsList();
-  });
-  root.querySelector("#insurance-status-btn").addEventListener("click", (event) => {
-    event.stopPropagation();
-    openInsuranceReceipt(state);
-  });
+  root
+    .querySelector("#insurance-reset-btn")
+    .addEventListener("click", (event) => {
+      event.stopPropagation();
+      state.insurance = createEmptyInsurance();
+      insFromBtn.textContent = "انتخاب تاریخ";
+      insToBtn.textContent = "انتخاب تاریخ";
+      insuranceToManuallyEdited = false;
+      activeInstallmentCount = 0;
+      renderPaymentsList();
+    });
+  root
+    .querySelector("#insurance-status-btn")
+    .addEventListener("click", (event) => {
+      event.stopPropagation();
+      openInsuranceReceipt(state);
+    });
   if (insuranceOpen) {
     insurancePanel.hidden = false;
     insurancePanel.classList.add("is-open");
@@ -2064,7 +1891,8 @@ async function renderCarFormPage(params, root) {
 
   const insFromBtn = root.querySelector("#ins-from-date-btn");
   const insToBtn = root.querySelector("#ins-to-date-btn");
-  let insuranceToManuallyEdited = !!state.insurance.toDate && !!state.insurance.fromDate;
+  let insuranceToManuallyEdited =
+    !!state.insurance.toDate && !!state.insurance.fromDate;
   insFromBtn.addEventListener("click", () => {
     openJalaliDatePicker({
       value: state.insurance.fromDate,
@@ -2156,23 +1984,27 @@ async function renderCarFormPage(params, root) {
       function updatePaymentStatus() {
         statusButton.classList.toggle("is-paid", p.paid === true);
         statusButton.setAttribute("aria-pressed", String(p.paid === true));
-        statusButton.innerHTML = p.paid === true
-          ? `پرداخت شده`
-          : "پرداخت نشده";
+        statusButton.innerHTML = p.paid === true ? `پرداخت شده` : "پرداخت نشده";
       }
       updatePaymentStatus();
-      card.querySelector(".ins-payment-remove")?.addEventListener("click", () => {
-        const removedIndex = Number(key.replace("inst", ""));
-        for (let index = removedIndex; index < 12; index += 1) {
-          const current = state.insurance.payments[`inst${index + 1}`];
-          state.insurance.payments[`inst${index}`] = current
-            ? { ...current }
-            : { amount: "", date: "", paid: false };
-        }
-        state.insurance.payments.inst12 = { amount: "", date: "", paid: false };
-        activeInstallmentCount = Math.max(0, activeInstallmentCount - 1);
-        renderPaymentsList();
-      });
+      card
+        .querySelector(".ins-payment-remove")
+        ?.addEventListener("click", () => {
+          const removedIndex = Number(key.replace("inst", ""));
+          for (let index = removedIndex; index < 12; index += 1) {
+            const current = state.insurance.payments[`inst${index + 1}`];
+            state.insurance.payments[`inst${index}`] = current
+              ? { ...current }
+              : { amount: "", date: "", paid: false };
+          }
+          state.insurance.payments.inst12 = {
+            amount: "",
+            date: "",
+            paid: false,
+          };
+          activeInstallmentCount = Math.max(0, activeInstallmentCount - 1);
+          renderPaymentsList();
+        });
       insPaymentsListEl.appendChild(card);
     });
     if (activeInstallmentCount < 12) {
@@ -2237,7 +2069,6 @@ async function renderCarFormPage(params, root) {
     }
     state.currentKm = currentKmRaw || 0;
     state.dailyKm = dailyKmRaw || "";
-    state.gpsOdometerEnabled = root.querySelector("#gps-odometer-checkbox").checked;
     if (!state.kmUpdatedAt) state.kmUpdatedAt = todayJalaliStr();
     state.updatedAt = new Date().toISOString();
     if (!state.createdAt) state.createdAt = new Date().toISOString();
@@ -2292,7 +2123,13 @@ async function renderServicesListPage(params, root) {
   ]);
   const carsById = Object.fromEntries(cars.map((c) => [c.id, c]));
 
-  const filterState = { carId: "", title: "", dateRange: "", customDate: "", oilOnly: false };
+  const filterState = {
+    carId: "",
+    title: "",
+    dateRange: "",
+    customDate: "",
+    oilOnly: false,
+  };
   let sortBy = "جدیدترین";
   let viewMode = await SettingsAPI.get("servicesViewMode", "card"); // card | timeline | compact
 
@@ -2353,7 +2190,10 @@ async function renderServicesListPage(params, root) {
       onSelect: (item) => {
         viewMode = item.value;
         void SettingsAPI.set("servicesViewMode", viewMode);
-        list.classList.toggle("service-list--timeline", item.value === "timeline");
+        list.classList.toggle(
+          "service-list--timeline",
+          item.value === "timeline",
+        );
         renderList();
       },
     }),
@@ -2362,7 +2202,8 @@ async function renderServicesListPage(params, root) {
   function applyFilters(items) {
     return items.filter((s) => {
       if (filterState.carId && s.carId !== filterState.carId) return false;
-      if (filterState.oilOnly && !(s.oilChange && s.oilChange.done)) return false;
+      if (filterState.oilOnly && !(s.oilChange && s.oilChange.done))
+        return false;
       if (filterState.title && !(s.title || "").includes(filterState.title))
         return false;
       if (filterState.dateRange) {
@@ -2406,9 +2247,7 @@ async function renderServicesListPage(params, root) {
           (jalaliStrToDate(a.date) || 0) - (jalaliStrToDate(b.date) || 0),
       );
     } else if (sortBy === "بیشترین مبلغ") {
-      arr.sort(
-        (a, b) => getServiceTotalCost(b) - getServiceTotalCost(a),
-      );
+      arr.sort((a, b) => getServiceTotalCost(b) - getServiceTotalCost(a));
     }
     return arr;
   }
@@ -2457,7 +2296,9 @@ async function renderServicesListPage(params, root) {
       } else if (viewMode === "compact") {
         list.appendChild(createServiceCompactRow(s, car, onClick));
       } else {
-        list.appendChild(createServiceCard(s, car, openServiceReceipt, onClick));
+        list.appendChild(
+          createServiceCard(s, car, openServiceReceipt, onClick),
+        );
       }
     });
   }
@@ -2732,9 +2573,16 @@ async function renderServiceFormPage(params, root) {
 
   const form = root.querySelector(".service-form");
 
-  root.querySelector("#switch-quick-service-btn").addEventListener("click", () => {
-    openQuickServiceFlow(cars, catalog, () => navigate("#/services"), state.carId);
-  });
+  root
+    .querySelector("#switch-quick-service-btn")
+    .addEventListener("click", () => {
+      openQuickServiceFlow(
+        cars,
+        catalog,
+        () => navigate("#/services"),
+        state.carId,
+      );
+    });
 
   // خودرو
   const carComboWrap = root.querySelector(".service-car-combo");
@@ -2789,7 +2637,8 @@ async function renderServiceFormPage(params, root) {
       return;
     }
     serviceKmRaw = String(car.currentKm);
-    root.querySelector("#service-km-input").value = formatNumberFa(serviceKmRaw);
+    root.querySelector("#service-km-input").value =
+      formatNumberFa(serviceKmRaw);
   });
 
   // تعویض روغن
@@ -3098,8 +2947,14 @@ async function renderServiceFormPage(params, root) {
 
 /** صفحه/شیت خدمات سرویس باز (2.3) */
 const QUICK_PRIMARY_CATALOG_IDS = [
-  "oil-filter", "air-filter", "cabin-filter", "fuel-filter",
-  "gearbox-oil", "brake-oil", "power-steering-oil", "tire-pressure",
+  "oil-filter",
+  "air-filter",
+  "cabin-filter",
+  "fuel-filter",
+  "gearbox-oil",
+  "brake-oil",
+  "power-steering-oil",
+  "tire-pressure",
 ];
 
 function pickDefaultCatalogStatus(cat) {
@@ -3129,9 +2984,10 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
   const nextBtn = wrap.querySelector(".quick-flow__next-btn");
 
   const data = {
-    carId: initialCarId && cars.some((car) => car.id === initialCarId)
-      ? initialCarId
-      : cars[0].id,
+    carId:
+      initialCarId && cars.some((car) => car.id === initialCarId)
+        ? initialCarId
+        : cars[0].id,
     date: todayJalaliStr(),
     km: "",
     oilDone: null,
@@ -3176,7 +3032,9 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
         chip.textContent = car.brandModel || "خودرو";
         chip.addEventListener("click", () => {
           data.carId = car.id;
-          carChips.querySelectorAll(".chip-toggle").forEach((item) => item.classList.remove("is-active"));
+          carChips
+            .querySelectorAll(".chip-toggle")
+            .forEach((item) => item.classList.remove("is-active"));
           chip.classList.add("is-active");
         });
         carChips.appendChild(chip);
@@ -3206,10 +3064,14 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
       bindThousandsInput(bodyEl.querySelector("#quick-flow-km"), (raw) => {
         data.km = raw;
       });
-      bodyEl.querySelector(".quick-flow__km-fill-btn")?.addEventListener("click", () => {
-        data.km = String(car.currentKm);
-        bodyEl.querySelector("#quick-flow-km").value = formatNumberFa(data.km);
-      });
+      bodyEl
+        .querySelector(".quick-flow__km-fill-btn")
+        ?.addEventListener("click", () => {
+          data.km = String(car.currentKm);
+          bodyEl.querySelector("#quick-flow-km").value = formatNumberFa(
+            data.km,
+          );
+        });
     } else if (stepIndex === 3) {
       bodyEl.innerHTML = `
         <h3 class="quick-flow__title">آیا تعویض روغن انجام شده؟</h3>
@@ -3222,7 +3084,9 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
             { label: "انجام نشد", value: false },
           ],
           data.oilDone,
-          (val) => { data.oilDone = val; },
+          (val) => {
+            data.oilDone = val;
+          },
         ),
       );
     } else if (stepIndex === 4) {
@@ -3232,16 +3096,20 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
           <div class="field"><label>نام روغن</label><input type="text" class="text-input" id="quick-flow-oil-name" value="${escapeHtml(data.oilName)}" /></div>
           <div class="field"><label>گرید روغن</label><input type="text" class="text-input" id="quick-flow-oil-grade" value="${escapeHtml(data.oilGrade)}" /></div>
         `;
-        bodyEl.querySelector("#quick-flow-oil-name").addEventListener("input", (e) => {
-          data.oilName = e.target.value;
-        });
-        bodyEl.querySelector("#quick-flow-oil-grade").addEventListener("input", (e) => {
-          data.oilGrade = e.target.value;
-        });
+        bodyEl
+          .querySelector("#quick-flow-oil-name")
+          .addEventListener("input", (e) => {
+            data.oilName = e.target.value;
+          });
+        bodyEl
+          .querySelector("#quick-flow-oil-grade")
+          .addEventListener("input", (e) => {
+            data.oilGrade = e.target.value;
+          });
       } else {
-        const items = QUICK_PRIMARY_CATALOG_IDS
-          .map((id) => catalog.find((c) => c.id === id))
-          .filter(Boolean);
+        const items = QUICK_PRIMARY_CATALOG_IDS.map((id) =>
+          catalog.find((c) => c.id === id),
+        ).filter(Boolean);
         bodyEl.innerHTML = `
           <h3 class="quick-flow__title">خدمات انجام‌شده (اختیاری)</h3>
           <div class="quick-flow__chips">
@@ -3252,7 +3120,9 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
           const id = btn.getAttribute("data-id");
           btn.addEventListener("click", () => {
             if (data.selectedItemIds.includes(id)) {
-              data.selectedItemIds = data.selectedItemIds.filter((x) => x !== id);
+              data.selectedItemIds = data.selectedItemIds.filter(
+                (x) => x !== id,
+              );
             } else {
               data.selectedItemIds.push(id);
             }
@@ -3357,8 +3227,14 @@ function openQuickServiceFlow(cars, catalog, onDone, initialCarId = null) {
 
 function openServiceItemsCatalog(catalog, state, onDone) {
   const PRIMARY_CATALOG_IDS = [
-    "oil-filter", "air-filter", "cabin-filter", "fuel-filter",
-    "gearbox-oil", "brake-oil", "power-steering-oil", "tire-pressure",
+    "oil-filter",
+    "air-filter",
+    "cabin-filter",
+    "fuel-filter",
+    "gearbox-oil",
+    "brake-oil",
+    "power-steering-oil",
+    "tire-pressure",
   ];
   let showAll = false;
 
@@ -3439,16 +3315,17 @@ function openServiceItemsCatalog(catalog, state, onDone) {
 
     if (!f) {
       // بدون جستجو: فقط خدمات پرکاربرد، مگر اینکه «بارگذاری بیشتر» زده شده باشد
-      const primary = PRIMARY_CATALOG_IDS
-        .map((id) => catalog.find((c) => c.id === id))
-        .filter(Boolean);
+      const primary = PRIMARY_CATALOG_IDS.map((id) =>
+        catalog.find((c) => c.id === id),
+      ).filter(Boolean);
       primary.forEach((cat) => listEl.appendChild(buildCatalogRow(cat)));
 
       const rest = catalog.filter((c) => !PRIMARY_CATALOG_IDS.includes(c.id));
       if (rest.length && !showAll) {
         const moreBtn = document.createElement("button");
         moreBtn.type = "button";
-        moreBtn.className = "btn btn--secondary btn--block catalog-load-more-btn";
+        moreBtn.className =
+          "btn btn--secondary btn--block catalog-load-more-btn";
         moreBtn.textContent = `بارگذاری بیشتر (${toFaDigits(rest.length)} مورد دیگر)`;
         moreBtn.addEventListener("click", () => {
           showAll = true;
@@ -4028,20 +3905,26 @@ function filterServicesByRange(services, range, customRange = {}) {
   const currentMonthIndex = currentYear * 12 + currentMonth - 1;
   if (range === "month") {
     return services.filter((s) => {
-      const [year, month] = toEnDigits(String(s.date || "")).split("/").map(Number);
+      const [year, month] = toEnDigits(String(s.date || ""))
+        .split("/")
+        .map(Number);
       return year === currentYear && month === currentMonth;
     });
   }
   if (range === "year") {
     return services.filter((s) => {
-      const [year] = toEnDigits(String(s.date || "")).split("/").map(Number);
+      const [year] = toEnDigits(String(s.date || ""))
+        .split("/")
+        .map(Number);
       return year === currentYear;
     });
   }
   const months = range === "3m" ? 3 : 6;
   const cutoffMonthIndex = currentMonthIndex - months + 1;
   return services.filter((s) => {
-    const [year, month] = toEnDigits(String(s.date || "")).split("/").map(Number);
+    const [year, month] = toEnDigits(String(s.date || ""))
+      .split("/")
+      .map(Number);
     if (!year || !month) return false;
     const monthIndex = year * 12 + month - 1;
     return monthIndex >= cutoffMonthIndex && monthIndex <= currentMonthIndex;
@@ -4049,9 +3932,16 @@ function filterServicesByRange(services, range, customRange = {}) {
 }
 
 function serviceCostBreakdown(s) {
-  const oil = s.oilChange && s.oilChange.done ? Number(s.oilChange.cost) || 0 : 0;
-  const items = (s.serviceItems || []).reduce((sum, i) => sum + (Number(i.cost) || 0), 0);
-  const goods = (s.goods || []).reduce((sum, g) => sum + (Number(g.amount) || 0), 0);
+  const oil =
+    s.oilChange && s.oilChange.done ? Number(s.oilChange.cost) || 0 : 0;
+  const items = (s.serviceItems || []).reduce(
+    (sum, i) => sum + (Number(i.cost) || 0),
+    0,
+  );
+  const goods = (s.goods || []).reduce(
+    (sum, g) => sum + (Number(g.amount) || 0),
+    0,
+  );
   const general = Number(s.generalCost) || 0;
   return { oil, items, goods, general };
 }
@@ -4068,15 +3958,27 @@ function getCarExpenseEntries(car, range, customRange) {
   Object.values(payments).forEach((payment) => {
     const amount = Number(payment && payment.amount) || 0;
     const date = (payment && payment.date) || insurance.fromDate || "";
-    if (amount > 0 && payment && payment.paid !== false && isDateInReportRange(date, range, customRange)) {
+    if (
+      amount > 0 &&
+      payment &&
+      payment.paid !== false &&
+      isDateInReportRange(date, range, customRange)
+    ) {
       entries.push({ category: "insurance", amount, date });
     }
   });
 
   const inspection = car.inspection || {};
   const inspectionCost = Number(inspection.cost) || 0;
-  if (inspectionCost > 0 && isDateInReportRange(inspection.date, range, customRange)) {
-    entries.push({ category: "inspection", amount: inspectionCost, date: inspection.date });
+  if (
+    inspectionCost > 0 &&
+    isDateInReportRange(inspection.date, range, customRange)
+  ) {
+    entries.push({
+      category: "inspection",
+      amount: inspectionCost,
+      date: inspection.date,
+    });
   }
   return entries;
 }
@@ -4085,7 +3987,10 @@ async function renderReportsPage(params, root) {
   renderTabBar("#/dashboard");
   removeFab();
 
-  const [cars, allServices] = await Promise.all([CarsAPI.getAll(), ServicesAPI.getAll()]);
+  const [cars, allServices] = await Promise.all([
+    CarsAPI.getAll(),
+    ServicesAPI.getAll(),
+  ]);
 
   const state = { carId: "", range: "all", customFrom: "", customTo: "" };
 
@@ -4147,11 +4052,17 @@ async function renderReportsPage(params, root) {
 
   root.querySelector(".report-car-combo").appendChild(
     createCombobox({
-      items: [{ value: "", label: "همه خودروها" }, ...cars.map((c) => ({ value: c.id, label: c.brandModel || "خودرو" }))],
+      items: [
+        { value: "", label: "همه خودروها" },
+        ...cars.map((c) => ({ value: c.id, label: c.brandModel || "خودرو" })),
+      ],
       value: state.carId,
       placeholder: "خودرو",
       searchable: false,
-      onSelect: (item) => { state.carId = item.value; renderReport(); },
+      onSelect: (item) => {
+        state.carId = item.value;
+        renderReport();
+      },
     }),
   );
   root.querySelector(".report-range-combo").appendChild(
@@ -4199,7 +4110,8 @@ async function renderReportsPage(params, root) {
 
   function renderReport() {
     let allFiltered = allServices;
-    if (state.carId) allFiltered = allFiltered.filter((s) => s.carId === state.carId);
+    if (state.carId)
+      allFiltered = allFiltered.filter((s) => s.carId === state.carId);
     let filtered = filterServicesByRange(allFiltered, state.range, {
       from: state.customFrom,
       to: state.customTo,
@@ -4208,16 +4120,31 @@ async function renderReportsPage(params, root) {
     const selectedCars = state.carId
       ? cars.filter((car) => String(car.id) === String(state.carId))
       : cars;
-    const carExpenseEntries = selectedCars.flatMap((car) => getCarExpenseEntries(car, state.range, {
-      from: state.customFrom,
-      to: state.customTo,
-    }));
-    const allCarExpenseEntries = selectedCars.flatMap((car) => getCarExpenseEntries(car, "all"));
-    const allServiceTotal = allFiltered.reduce((sum, s) => sum + getServiceTotalCost(s), 0);
-    const allTotalCost = allServiceTotal + allCarExpenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
-    const avgCost = allFiltered.length ? Math.round(allServiceTotal / allFiltered.length) : 0;
+    const carExpenseEntries = selectedCars.flatMap((car) =>
+      getCarExpenseEntries(car, state.range, {
+        from: state.customFrom,
+        to: state.customTo,
+      }),
+    );
+    const allCarExpenseEntries = selectedCars.flatMap((car) =>
+      getCarExpenseEntries(car, "all"),
+    );
+    const allServiceTotal = allFiltered.reduce(
+      (sum, s) => sum + getServiceTotalCost(s),
+      0,
+    );
+    const allTotalCost =
+      allServiceTotal +
+      allCarExpenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
+    const avgCost = allFiltered.length
+      ? Math.round(allServiceTotal / allFiltered.length)
+      : 0;
     const maxService = allFiltered[0]
-      ? allFiltered.reduce((max, s) => getServiceTotalCost(s) > getServiceTotalCost(max) ? s : max, allFiltered[0])
+      ? allFiltered.reduce(
+          (max, s) =>
+            getServiceTotalCost(s) > getServiceTotalCost(max) ? s : max,
+          allFiltered[0],
+        )
       : null;
 
     // سطرهای نمودار ماهانه
@@ -4242,12 +4169,13 @@ async function renderReportsPage(params, root) {
     });
     const monthKeys = [...monthMap.keys()].sort();
     const maxMonthVal = Math.max(...monthKeys.map((k) => monthMap.get(k)), 1);
-    const chartBars = monthKeys.map((key) => {
-      const [, jm] = key.split("/");
-      const monthLabel = JALALI_MONTHS[Number(jm) - 1] || jm;
-      const [jy] = key.split("/");
-      const total = monthMap.get(key);
-      return `
+    const chartBars = monthKeys
+      .map((key) => {
+        const [, jm] = key.split("/");
+        const monthLabel = JALALI_MONTHS[Number(jm) - 1] || jm;
+        const [jy] = key.split("/");
+        const total = monthMap.get(key);
+        return `
         <div class="report-chart__column">
           <strong>${formatToman(total)}</strong>
           <div class="report-chart__bar">
@@ -4255,28 +4183,38 @@ async function renderReportsPage(params, root) {
           </div>
           <span>${monthLabel} ${toFaDigits(jy)}</span>
         </div>`;
-    }).join("");
+      })
+      .join("");
 
     // تفکیک دسته‌بندی هزینه
-    const breakdown = filtered.reduce((acc, s) => {
-      const b = serviceCostBreakdown(s);
-      acc.oil += b.oil;
-      acc.items += b.items;
-      acc.goods += b.goods;
-      acc.general += b.general;
-      return acc;
-    }, { oil: 0, items: 0, goods: 0, general: 0, insurance: 0, inspection: 0 });
+    const breakdown = filtered.reduce(
+      (acc, s) => {
+        const b = serviceCostBreakdown(s);
+        acc.oil += b.oil;
+        acc.items += b.items;
+        acc.goods += b.goods;
+        acc.general += b.general;
+        return acc;
+      },
+      { oil: 0, items: 0, goods: 0, general: 0, insurance: 0, inspection: 0 },
+    );
     carExpenseEntries.forEach((entry) => {
       breakdown[entry.category] += entry.amount;
     });
-    const breakdownTotal = Object.values(breakdown).reduce((sum, value) => sum + value, 0) || 1;
-    const breakdownRows = reportCategoryRows.map((row) => ({
-      ...row,
-      value: breakdown[row.key],
-    })).filter((r) => r.value > 0);
-    const breakdownBar = breakdownRows.map((r) =>
-      `<span class="report-breakdown__segment" style="flex-basis:${(r.value / breakdownTotal) * 100}%;background:${r.color}" title="${r.label}" aria-label="${r.label}"></span>`
-    ).join("");
+    const breakdownTotal =
+      Object.values(breakdown).reduce((sum, value) => sum + value, 0) || 1;
+    const breakdownRows = reportCategoryRows
+      .map((row) => ({
+        ...row,
+        value: breakdown[row.key],
+      }))
+      .filter((r) => r.value > 0);
+    const breakdownBar = breakdownRows
+      .map(
+        (r) =>
+          `<span class="report-breakdown__segment" style="flex-basis:${(r.value / breakdownTotal) * 100}%;background:${r.color}" title="${r.label}" aria-label="${r.label}"></span>`,
+      )
+      .join("");
     const breakdownTitle = state.carId
       ? selectedCars[0]?.brandModel || "خودرو"
       : "همه خودروها";
@@ -4325,12 +4263,16 @@ async function renderReportsPage(params, root) {
             ${breakdownBar}
           </div>
           <div class="report-breakdown__legend">
-            ${breakdownRows.map((r) => `
+            ${breakdownRows
+              .map(
+                (r) => `
               <span class="report-breakdown__legend-item">
                 <i class="report-breakdown__legend-dot" style="background:${r.color}"></i>
                 <span>${r.label}</span>
                 <strong>${formatToman(r.value)}</strong>
-              </span>`).join("")}
+              </span>`,
+              )
+              .join("")}
           </div>
         </div>
       </section>

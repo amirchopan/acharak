@@ -1,6 +1,6 @@
 {
   "name": "آچارک",
-  "short_name": "Acharak",
+  "short_name": "مدیریت خودرو",
   "description": "اپلیکیشن آفلاین سرویس‌های دوره‌ای خودرو",
   "start_url": "./index.html",
   "scope": "./",
