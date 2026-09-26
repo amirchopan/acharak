@@ -10,7 +10,6 @@ import { acIcon, escapeHtml, toEnDigits, toFaDigits } from "./utils.js";
 
 let pendingPhone = "";
 let pendingOtpResponse = null;
-let registerPhonePrefill = "";
 let resendTimer = null;
 
 function phoneDigits(value) {
@@ -180,7 +179,7 @@ function renderRegisterPage(params, root) {
   root.innerHTML = authPageShell({
     eyebrow: "حساب کاربری آچارک",
     title: "ساخت حساب کاربری",
-    subtitle: "برای ادامه، نام و شماره همراه خود را وارد کنید.",
+    subtitle: "نام، شماره همراه و رمز عبور را وارد کنید. در این نسخه مالکیت شماره با پیامک تأیید نمی‌شود.",
     content: `
       <form class="form-stack auth-form" id="register-form" novalidate>
         <div class="field">
@@ -199,15 +198,23 @@ function renderRegisterPage(params, root) {
             inputmode="tel" autocomplete="tel-national" maxlength="18" placeholder="۰۹۱۲۱۲۳۴۵۶۷"
             dir="ltr" required />
         </div>
+        <div class="field">
+          <label for="register-password">رمز عبور</label>
+          <input class="text-input" id="register-password" name="password" type="password"
+            autocomplete="new-password" minlength="8" maxlength="128" required />
+        </div>
+        <div class="field">
+          <label for="register-password-confirm">تکرار رمز عبور</label>
+          <input class="text-input" id="register-password-confirm" name="password_confirm" type="password"
+            autocomplete="new-password" minlength="8" maxlength="128" required />
+        </div>
         <p class="auth-form__error" role="alert" hidden></p>
-        <button class="btn btn--primary btn--block" type="submit" data-label="ادامه">ادامه</button>
+        <button class="btn btn--primary btn--block" type="submit" data-label="ساخت حساب">ساخت حساب</button>
       </form>
       <p class="auth-switch">قبلاً حساب ساخته‌اید؟ <a href="#/login">ورود</a></p>`,
   });
 
   const form = root.querySelector("#register-form");
-  form.elements.phone.value = registerPhonePrefill;
-  registerPhonePrefill = "";
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     showFormError(form, "");
@@ -215,22 +222,31 @@ function renderRegisterPage(params, root) {
     const firstName = String(values.get("first_name") || "").trim();
     const lastName = String(values.get("last_name") || "").trim();
     const phone = normalizePhoneForDisplay(values.get("phone"));
+    const password = String(values.get("password") || "");
+    const passwordConfirm = String(values.get("password_confirm") || "");
 
     if (!firstName || !/^09\d{9}$/.test(phone)) {
       showFormError(form, "نام و یک شماره همراه معتبر وارد کنید.");
       return;
     }
+    if (Array.from(password).length < 8 || Array.from(password).length > 128) {
+      showFormError(form, "رمز عبور باید بین ۸ تا ۱۲۸ نویسه باشد.");
+      return;
+    }
+    if (password !== passwordConfirm) {
+      showFormError(form, "رمز عبور و تکرار آن یکسان نیستند.");
+      return;
+    }
 
     setFormBusy(form, true);
     try {
-      const response = await registerWithPhone({
+      await registerWithPhone({
         first_name: firstName,
         last_name: lastName,
         phone,
+        password,
       });
-      pendingPhone = phone;
-      pendingOtpResponse = response;
-      navigate("#/otp");
+      navigate("#/dashboard");
     } catch (error) {
       showFormError(
         form,
@@ -254,7 +270,7 @@ function renderLoginPage(params, root) {
   root.innerHTML = authPageShell({
     eyebrow: "خوش آمدید",
     title: "ورود به آچارک",
-    subtitle: "برای دریافت کد تأیید، شماره همراه خود را وارد کنید.",
+    subtitle: "برای ورود، شماره همراه و رمز عبورتان را وارد کنید. بازیابی رمز فعلاً در دسترس نیست.",
     content: `
       <form class="form-stack auth-form" id="login-form" novalidate>
         <div class="field">
@@ -263,8 +279,13 @@ function renderLoginPage(params, root) {
             inputmode="tel" autocomplete="tel-national" maxlength="18" placeholder="۰۹۱۲۱۲۳۴۵۶۷"
             dir="ltr" required />
         </div>
+        <div class="field">
+          <label for="login-password">رمز عبور</label>
+          <input class="text-input" id="login-password" name="password" type="password"
+            autocomplete="current-password" maxlength="128" required />
+        </div>
         <p class="auth-form__error" role="alert" hidden></p>
-        <button class="btn btn--primary btn--block" type="submit" data-label="ادامه">ادامه</button>
+        <button class="btn btn--primary btn--block" type="submit" data-label="ورود">ورود</button>
       </form>
       <p class="auth-switch">حساب کاربری ندارید؟ <a href="#/register">ثبت‌نام</a></p>`,
   });
@@ -273,22 +294,25 @@ function renderLoginPage(params, root) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     showFormError(form, "");
-    const phone = normalizePhoneForDisplay(new FormData(form).get("phone"));
+    const values = new FormData(form);
+    const phone = normalizePhoneForDisplay(values.get("phone"));
+    const password = String(values.get("password") || "");
     if (!/^09\d{9}$/.test(phone)) {
       showFormError(form, "شماره همراه معتبر وارد کنید.");
+      return;
+    }
+    if (!password || password.length > 128) {
+      showFormError(form, "رمز عبور را وارد کنید.");
       return;
     }
 
     setFormBusy(form, true);
     try {
-      const response = await loginWithPhone({ phone });
-      pendingPhone = phone;
-      pendingOtpResponse = response;
-      navigate("#/otp");
+      await loginWithPhone({ phone, password });
+      navigate("#/dashboard");
     } catch (error) {
       if (error.registrationRequired) {
-        registerPhonePrefill = phone;
-        navigate("#/register");
+        showFormError(form, "برای این شماره حسابی پیدا نشد؛ ابتدا از بخش ثبت‌نام حساب بسازید.");
       } else {
         showFormError(form, error.message);
       }

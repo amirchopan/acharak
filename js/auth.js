@@ -90,12 +90,25 @@ async function initializeAuth() {
   return getAuthState();
 }
 
-async function registerWithPhone({ first_name, last_name, phone }) {
-  return authRequest("/api/auth/register", { first_name, last_name, phone });
+async function completeAuthentication(result) {
+  publishState({ authenticated: true, user: result.user, loading: false });
+  if (authSuccessHandler) await authSuccessHandler(result.user);
+  return result;
 }
 
-async function loginWithPhone({ phone }) {
-  return authRequest("/api/auth/login", { phone });
+async function registerWithPhone({ first_name, last_name, phone, password }) {
+  const result = await authRequest("/api/auth/register", {
+    first_name,
+    last_name,
+    phone,
+    password,
+  });
+  return completeAuthentication(result);
+}
+
+async function loginWithPhone({ phone, password }) {
+  const result = await authRequest("/api/auth/login", { phone, password });
+  return completeAuthentication(result);
 }
 
 async function requestOtp(phone) {
@@ -104,9 +117,7 @@ async function requestOtp(phone) {
 
 async function verifyOtp(phone, code) {
   const result = await authRequest("/api/auth/otp/verify", { phone, code });
-  publishState({ authenticated: true, user: result.user, loading: false });
-  if (authSuccessHandler) await authSuccessHandler(result.user);
-  return result;
+  return completeAuthentication(result);
 }
 
 async function getAccountData() {

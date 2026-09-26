@@ -15,7 +15,7 @@ globalThis.document = {
   },
 };
 
-const { loginWithPhone } = await import("../js/auth.js");
+const { loginWithPhone, registerWithPhone } = await import("../js/auth.js");
 
 test("local frontend ports use the Wrangler Worker port", async () => {
   let requestUrl;
@@ -28,6 +28,38 @@ test("local frontend ports use the Wrangler Worker port", async () => {
 
   await loginWithPhone({ phone: "09121234567" });
   assert.equal(requestUrl, "http://127.0.0.1:8787/api/auth/login");
+});
+
+test("login and registration send the user's password to the Worker", async () => {
+  const bodies = [];
+  globalThis.fetch = async (_url, options) => {
+    bodies.push(JSON.parse(options.body));
+    return new Response(JSON.stringify({
+      success: true,
+      authenticated: true,
+      user: { id: "user-1", phone: "09121234567" },
+    }), {
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  await loginWithPhone({ phone: "09121234567", password: "secure-pass-123" });
+  await registerWithPhone({
+    first_name: "آرمان",
+    last_name: "آچارک",
+    phone: "09121234567",
+    password: "secure-pass-123",
+  });
+
+  assert.deepEqual(bodies, [
+    { phone: "09121234567", password: "secure-pass-123" },
+    {
+      first_name: "آرمان",
+      last_name: "آچارک",
+      phone: "09121234567",
+      password: "secure-pass-123",
+    },
+  ]);
 });
 
 test("HTML and other non-JSON responses report the Worker URL and status", async () => {

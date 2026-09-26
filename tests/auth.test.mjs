@@ -9,6 +9,7 @@ const migrations = [
   readFileSync(new URL("../migrations/0001_initial_schema.sql", import.meta.url), "utf8"),
   readFileSync(new URL("../migrations/0002_phone_auth.sql", import.meta.url), "utf8"),
   readFileSync(new URL("../migrations/0003_account_data.sql", import.meta.url), "utf8"),
+  readFileSync(new URL("../migrations/0004_password_accounts.sql", import.meta.url), "utf8"),
 ];
 const AUTH_SECRET = randomBytes(32).toString("base64url");
 
@@ -49,11 +50,108 @@ async function register(env, phone = "+98 912 123 4567") {
   return { response, body: await response.json() };
 }
 
+async function registerWithPassword(env, {
+  phone = "09121234567",
+  password = "secure-pass-123",
+} = {}) {
+  return call("/api/auth/register", {
+    body: { first_name: "آرمان", last_name: "آچارک", phone, password },
+  }, env);
+}
+
 async function verify(env, phone, code) {
   return call("/api/auth/otp/verify", { body: { phone, code } }, env);
 }
 
-test("register normalizes an Iranian phone and stores no password or plaintext OTP", async () => {
+test("password registration stores a salted hash and starts an authenticated session", async () => {
+  const { env, sqlite } = setup();
+
+  try {
+    const response = await registerWithPassword(env);
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.authenticated, true);
+    assert.equal(body.user.phone, "09121234567");
+    assert.ok(response.headers.get("set-cookie").includes("HttpOnly"));
+
+    const stored = sqlite.prepare("SELECT password_hash FROM users").get();
+    assert.ok(stored.password_hash.startsWith("pbkdf2-sha256$"));
+    assert.notEqual(stored.password_hash, "secure-pass-123");
+
+    const token = response.headers.get("set-cookie").match(/acharak_session=([^;]+)/)[1];
+    assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM sessions").get().count, 1);
+    const session = await call("/api/auth/me", {
+      method: "GET",
+      cookie: `acharak_session=${token}`,
+    }, env);
+    const sessionBody = await session.json();
+    assert.equal(sessionBody.authenticated, true);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("password login accepts the correct password and rejects incorrect credentials", async () => {
+  const { env, sqlite } = setup();
+
+  try {
+    await registerWithPassword(env);
+    const incorrect = await call("/api/auth/login", {
+      body: { phone: "09121234567", password: "incorrect-pass" },
+    }, env);
+    assert.equal(incorrect.status, 401);
+
+    const throttled = await call("/api/auth/login", {
+      body: { phone: "09121234567", password: "incorrect-pass" },
+    }, env);
+    assert.equal(throttled.status, 429);
+
+    sqlite.prepare("DELETE FROM otp_request_limits").run();
+    const correct = await call("/api/auth/login", {
+      body: { phone: "00989121234567", password: "secure-pass-123" },
+    }, env);
+    const body = await correct.json();
+    assert.equal(correct.status, 200);
+    assert.equal(body.authenticated, true);
+    assert.ok(correct.headers.get("set-cookie").includes("acharak_session="));
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("password registration validates password length and duplicate phone numbers", async () => {
+  const { env, sqlite } = setup();
+
+  try {
+    const weakPassword = await registerWithPassword(env, { password: "short" });
+    assert.equal(weakPassword.status, 400);
+
+    const first = await registerWithPassword(env);
+    const duplicate = await registerWithPassword(env);
+    assert.equal(first.status, 200);
+    assert.equal(duplicate.status, 409);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("password login identifies missing accounts without redirecting or issuing a session", async () => {
+  const { env, sqlite } = setup();
+
+  try {
+    const missing = await call("/api/auth/login", {
+      body: { phone: "09129999999", password: "secure-pass-123" },
+    }, env);
+    const body = await missing.json();
+    assert.equal(missing.status, 404);
+    assert.equal(body.registration_required, true);
+    assert.equal(missing.headers.has("set-cookie"), false);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("legacy local OTP registration normalizes an Iranian phone and stores no plaintext code", async () => {
   const { env, sqlite } = setup();
 
   try {
@@ -71,7 +169,8 @@ test("register normalizes an Iranian phone and stores no password or plaintext O
 
     const userColumns = sqlite.prepare("PRAGMA table_info(users)").all();
     assert.ok(userColumns.some(({ name }) => name === "first_name"));
-    assert.ok(!userColumns.some(({ name }) => name === "password_hash"));
+    assert.ok(userColumns.some(({ name }) => name === "password_hash"));
+    assert.equal(sqlite.prepare("SELECT password_hash FROM users").get().password_hash, null);
 
     const challenge = sqlite.prepare("SELECT code_hash FROM otp_challenges").get();
     assert.notEqual(challenge.code_hash, body.development_otp);
@@ -165,37 +264,29 @@ test("OTP request is throttled and production never returns a development code",
   }
 });
 
-test("remote development OTP is limited to explicitly allowlisted phone numbers", async () => {
+test("production never enables development OTP, even for a formerly allowlisted phone", async () => {
   const { env, sqlite } = setup();
 
   try {
     await register(env);
     sqlite.prepare("DELETE FROM otp_request_limits").run();
     const workerUrl = "https://acharak.amirchopan2001.workers.dev";
-    const remoteEnv = {
+    const productionEnv = {
       ...env,
       AUTH_ENV: "production",
       APP_ORIGIN: workerUrl,
+      DEV_OTP_ENABLED: "true",
       DEV_OTP_PHONE_ALLOWLIST: "09121234567",
     };
 
-    const allowed = await call("/api/auth/login", {
+    const response = await call("/api/auth/login", {
       body: { phone: "09121234567" },
       url: workerUrl,
       origin: workerUrl,
-    }, remoteEnv);
-    const allowedBody = await allowed.json();
-    assert.equal(allowed.status, 200);
-    assert.match(allowedBody.development_otp, /^\d{6}$/);
-
-    const blockedEnv = { ...remoteEnv, DEV_OTP_PHONE_ALLOWLIST: "" };
-    const blocked = await call("/api/auth/login", {
-      body: { phone: "09121234567" },
-      url: workerUrl,
-      origin: workerUrl,
-    }, blockedEnv);
-    assert.equal(blocked.status, 503);
-    assert.equal("development_otp" in await blocked.json(), false);
+    }, productionEnv);
+    const body = await response.json();
+    assert.equal(response.status, 503);
+    assert.equal("development_otp" in body, false);
   } finally {
     sqlite.close();
   }

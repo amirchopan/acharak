@@ -7,6 +7,9 @@ const OTP_MAX_REQUESTS = 5;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = "acharak_session";
 const ACCOUNT_DATA_MAX_BYTES = 2 * 1024 * 1024;
+const PASSWORD_HASH_ITERATIONS = 120000;
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 128;
 const GENERIC_LOGIN_MESSAGE = "اگر شماره همراه در آچارک ثبت شده باشد، کد تأیید برای آن ارسال می‌شود.";
 
 class AuthError extends Error {
@@ -39,23 +42,13 @@ function isLocalHost(hostname) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
 }
 
-function getOtpProvider(request, env, phone) {
-  const testModeEnabled = env.DEV_OTP_ENABLED === "true";
-  const hostname = new URL(request.url).hostname;
+function getOtpProvider(request, env) {
   const localDevelopment =
     env.AUTH_ENV === "development" &&
-    testModeEnabled &&
-    isLocalHost(hostname);
-  const allowedPhones = String(env.DEV_OTP_PHONE_ALLOWLIST || "")
-    .split(",")
-    .map((value) => normalizePhone(value.trim()))
-    .filter(Boolean);
-  const allowlistedDevelopment =
-    testModeEnabled &&
-    !isLocalHost(hostname) &&
-    allowedPhones.includes(phone);
+    env.DEV_OTP_ENABLED === "true" &&
+    isLocalHost(new URL(request.url).hostname);
 
-  return localDevelopment || allowlistedDevelopment
+  return localDevelopment
     ? new LocalDevelopmentOTPProvider()
     : new UnconfiguredOTPProvider();
 }
@@ -79,6 +72,67 @@ async function hmacHex(secret, value) {
     await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value)),
   );
   return Array.from(signature, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function hexToBytes(value) {
+  if (typeof value !== "string" || !/^(?:[0-9a-f]{2})+$/i.test(value)) return null;
+  return Uint8Array.from(value.match(/.{2}/g), (byte) => Number.parseInt(byte, 16));
+}
+
+async function derivePasswordHash(password, salt, iterations = PASSWORD_HASH_ITERATIONS) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  return new Uint8Array(await crypto.subtle.deriveBits({
+    name: "PBKDF2",
+    salt,
+    iterations,
+    hash: "SHA-256",
+  }, key, 256));
+}
+
+function validatePassword(value, required = true) {
+  if (typeof value !== "string") {
+    if (!required && value === undefined) return null;
+    throw new AuthError("رمز عبور معتبر وارد کنید.", 400);
+  }
+  const length = Array.from(value).length;
+  if ((required && length < PASSWORD_MIN_LENGTH) || length > PASSWORD_MAX_LENGTH
+    || new TextEncoder().encode(value).length > 1024) {
+    throw new AuthError(
+      `رمز عبور باید بین ${PASSWORD_MIN_LENGTH} تا ${PASSWORD_MAX_LENGTH} نویسه باشد.`,
+      400,
+    );
+  }
+  return value;
+}
+
+async function createPasswordHash(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const hash = await derivePasswordHash(password, salt);
+  return `pbkdf2-sha256$${PASSWORD_HASH_ITERATIONS}$${bytesToHex(salt)}$${bytesToHex(hash)}`;
+}
+
+async function verifyPassword(password, storedHash) {
+  if (typeof storedHash !== "string") return false;
+  const [algorithm, iterationText, saltText, hashText, extra] = storedHash.split("$");
+  const iterations = Number(iterationText);
+  const salt = hexToBytes(saltText);
+  const expected = hexToBytes(hashText);
+  if (extra !== undefined || algorithm !== "pbkdf2-sha256"
+    || iterations !== PASSWORD_HASH_ITERATIONS || salt?.length !== 16 || expected?.length !== 32) {
+    return false;
+  }
+  const actual = await derivePasswordHash(password, salt, iterations);
+  return constantTimeEqual(bytesToHex(actual), bytesToHex(expected));
 }
 
 function constantTimeEqual(left, right) {
@@ -256,11 +310,11 @@ async function updateRequestLimit(db, phoneHash, now) {
     1,
     Math.ceil((nextAllowedAt - now) / 1000),
   );
-  throw new AuthError("درخواست کد بیش از حد مجاز است. کمی بعد دوباره تلاش کنید.", 429, retryAfterSeconds);
+  throw new AuthError("تعداد تلاش‌ها از حد مجاز گذشته است. کمی بعد دوباره تلاش کنید.", 429, retryAfterSeconds);
 }
 
 async function requestOtpForPhone({ db, env, request, phone, user, now }) {
-  const provider = getOtpProvider(request, env, phone);
+  const provider = getOtpProvider(request, env);
   if (provider instanceof UnconfiguredOTPProvider) {
     throw new AuthError("ارسال کد تأیید هنوز برای این محیط پیکربندی نشده است.", 503);
   }
@@ -315,14 +369,69 @@ async function getUserByPhone(db, phone) {
   ).bind(phone).first();
 }
 
+async function createAuthenticatedSession(user, env, now = Date.now()) {
+  const secret = getAuthSecret(env);
+  const token = randomToken();
+  const tokenHash = await hmacHex(secret, `session:${token}`);
+  const expiresAt = new Date(now + SESSION_TTL_MS).toISOString();
+  await env.DB.prepare(
+    "INSERT INTO sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+  ).bind(crypto.randomUUID(), user.id, tokenHash, expiresAt).run();
+
+  const { id, phone, first_name, last_name } = user;
+  return jsonResponse({
+    success: true,
+    authenticated: true,
+    user: { id, phone, first_name, last_name },
+  }, 200, {
+    "set-cookie": sessionCookie(token, Math.floor(SESSION_TTL_MS / 1000)),
+  });
+}
+
+async function handlePasswordRegister(body, env) {
+  const firstName = normalizeName(body.first_name, true);
+  const lastName = normalizeName(body.last_name, false);
+  const phone = normalizePhone(body.phone);
+  const password = validatePassword(body.password);
+  if (!phone) throw new AuthError("شماره همراه ایرانی معتبر وارد کنید.", 400);
+
+  if (await getUserByPhone(env.DB, phone)) {
+    return jsonResponse({
+      success: false,
+      message: "این شماره قبلاً ثبت شده است؛ برای ادامه وارد شوید.",
+    }, 409);
+  }
+
+  const passwordHash = await createPasswordHash(password);
+  const user = {
+    id: crypto.randomUUID(),
+    phone,
+    first_name: firstName,
+    last_name: lastName,
+  };
+  const inserted = await env.DB.prepare(
+    "INSERT INTO users (id, phone, first_name, last_name, password_hash) VALUES (?, ?, ?, ?, ?) ON CONFLICT(phone) DO NOTHING",
+  ).bind(user.id, phone, firstName, lastName, passwordHash).run();
+
+  if (Number(inserted.meta?.changes) !== 1) {
+    return jsonResponse({
+      success: false,
+      message: "این شماره قبلاً ثبت شده است؛ برای ادامه وارد شوید.",
+    }, 409);
+  }
+
+  return createAuthenticatedSession(user, env);
+}
+
 async function handleRegister(request, env) {
   const body = await readJson(request);
+  if (Object.hasOwn(body, "password")) return handlePasswordRegister(body, env);
   const firstName = normalizeName(body.first_name, true);
   const lastName = normalizeName(body.last_name, false);
   const phone = normalizePhone(body.phone);
   if (!phone) throw new AuthError("شماره همراه ایرانی معتبر وارد کنید.", 400);
 
-  const provider = getOtpProvider(request, env, phone);
+  const provider = getOtpProvider(request, env);
   if (provider instanceof UnconfiguredOTPProvider) {
     throw new AuthError("ارسال کد تأیید هنوز برای این محیط پیکربندی نشده است.", 503);
   }
@@ -366,6 +475,9 @@ async function handleLogin(request, env) {
   const body = await readJson(request);
   const phone = normalizePhone(body.phone);
   if (!phone) throw new AuthError("شماره همراه ایرانی معتبر وارد کنید.", 400);
+  if (Object.hasOwn(body, "password")) {
+    return handlePasswordLogin(phone, body.password, env);
+  }
 
   const user = await getUserByPhone(env.DB, phone);
   if (!user) {
@@ -376,7 +488,7 @@ async function handleLogin(request, env) {
     }, 404);
   }
 
-  const provider = getOtpProvider(request, env, phone);
+  const provider = getOtpProvider(request, env);
   if (provider instanceof UnconfiguredOTPProvider) {
     throw new AuthError("ارسال کد تأیید هنوز برای این محیط پیکربندی نشده است.", 503);
   }
@@ -389,6 +501,33 @@ async function handleLogin(request, env) {
     user,
     now: Date.now(),
   });
+}
+
+async function handlePasswordLogin(phone, value, env) {
+  const password = validatePassword(value, false);
+  if (!password) throw new AuthError("شماره همراه یا رمز عبور اشتباه است.", 401);
+
+  const user = await env.DB.prepare(
+    "SELECT id, phone, first_name, last_name, password_hash FROM users WHERE phone = ?",
+  ).bind(phone).first();
+  if (!user) {
+    return jsonResponse({
+      success: false,
+      registration_required: true,
+      message: "برای این شماره حسابی پیدا نشد؛ ابتدا ثبت‌نام کنید.",
+    }, 404);
+  }
+
+  const secret = getAuthSecret(env);
+  const phoneHash = await hmacHex(secret, `otp-rate:${phone}`);
+  await updateRequestLimit(env.DB, phoneHash, Date.now());
+  if (!await verifyPassword(password, user.password_hash)) {
+    throw new AuthError("شماره همراه یا رمز عبور اشتباه است.", 401);
+  }
+
+  await env.DB.prepare("DELETE FROM otp_request_limits WHERE phone_hash = ?")
+    .bind(phoneHash).run();
+  return createAuthenticatedSession(user, env);
 }
 
 async function handleOtpRequest(request, env) {
@@ -456,20 +595,7 @@ async function handleOtpVerify(request, env) {
   ).bind(consumed.user_id).first();
   if (!user) throw new AuthError("کاربر پیدا نشد.", 401);
 
-  const token = randomToken();
-  const tokenHash = await hmacHex(secret, `session:${token}`);
-  const expiresAt = new Date(now + SESSION_TTL_MS).toISOString();
-  await env.DB.prepare(
-    "INSERT INTO sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
-  ).bind(crypto.randomUUID(), user.id, tokenHash, expiresAt).run();
-
-  return jsonResponse({
-    success: true,
-    authenticated: true,
-    user,
-  }, 200, {
-    "set-cookie": sessionCookie(token, Math.floor(SESSION_TTL_MS / 1000)),
-  });
+  return createAuthenticatedSession(user, env, now);
 }
 
 async function handleMe(request, env) {

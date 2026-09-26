@@ -7,6 +7,7 @@ const migrations = [
   readFileSync(new URL("../migrations/0001_initial_schema.sql", import.meta.url), "utf8"),
   readFileSync(new URL("../migrations/0002_phone_auth.sql", import.meta.url), "utf8"),
   readFileSync(new URL("../migrations/0003_account_data.sql", import.meta.url), "utf8"),
+  readFileSync(new URL("../migrations/0004_password_accounts.sql", import.meta.url), "utf8"),
 ];
 
 function createDatabase() {
@@ -70,6 +71,35 @@ test("migration creates every requested table and accepts a complete data hierar
       db.prepare("SELECT COUNT(*) AS count FROM service_items").get().count,
       1,
     );
+  } finally {
+    db.close();
+  }
+});
+
+test("password migration clears legacy accounts and their dependent data", () => {
+  const db = new DatabaseSync(":memory:");
+  db.exec("PRAGMA foreign_keys = ON");
+  migrations.slice(0, 3).forEach((migration) => db.exec(migration));
+
+  try {
+    insertUser(db);
+    insertCar(db);
+    insertService(db);
+    db.prepare("INSERT INTO account_data (user_id, payload) VALUES (?, ?)").run(
+      "user-1",
+      JSON.stringify({ cars: [] }),
+    );
+    db.exec(migrations[3]);
+
+    for (const table of ["users", "cars", "services", "sessions", "account_data", "otp_challenges"]) {
+      assert.equal(
+        db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get().count,
+        0,
+        `${table} should be cleared by the password migration`,
+      );
+    }
+    assert.ok(db.prepare("PRAGMA table_info(users)").all()
+      .some(({ name }) => name === "password_hash"));
   } finally {
     db.close();
   }

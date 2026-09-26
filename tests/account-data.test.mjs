@@ -9,6 +9,7 @@ const migrations = [
   readFileSync(new URL("../migrations/0001_initial_schema.sql", import.meta.url), "utf8"),
   readFileSync(new URL("../migrations/0002_phone_auth.sql", import.meta.url), "utf8"),
   readFileSync(new URL("../migrations/0003_account_data.sql", import.meta.url), "utf8"),
+  readFileSync(new URL("../migrations/0004_password_accounts.sql", import.meta.url), "utf8"),
 ];
 
 function setup() {
