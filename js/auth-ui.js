@@ -10,6 +10,7 @@ import { acIcon, escapeHtml, toEnDigits, toFaDigits } from "./utils.js";
 
 let pendingPhone = "";
 let pendingOtpResponse = null;
+let registerPhonePrefill = "";
 let resendTimer = null;
 
 function phoneDigits(value) {
@@ -64,7 +65,7 @@ function startOtpPage(root, response) {
   root.innerHTML = authPageShell({
     eyebrow: "تأیید شماره همراه",
     title: "کد تأیید را وارد کنید",
-    subtitle: `کد تأیید برای شماره <bdi dir="ltr">${escapeHtml(toFaDigits(pendingPhone))}</bdi> ارسال شد.`,
+    subtitle: `${developmentCode ? "کد آزمایشی" : "کد تأیید"} برای شماره <bdi dir="ltr">${escapeHtml(toFaDigits(pendingPhone))}</bdi> ${developmentCode ? "آماده است." : "ارسال شد."}`,
     backHref: "#/login",
     content: `
       <form class="form-stack auth-form" id="otp-form" novalidate>
@@ -75,7 +76,7 @@ function startOtpPage(root, response) {
             maxlength="6" placeholder="------" dir="ltr" required />
         </div>
         <p class="auth-form__error" role="alert" hidden></p>
-        ${developmentCode ? `<p class="auth-development-code" role="status">کد آزمایشی محلی: <bdi dir="ltr">${escapeHtml(toFaDigits(developmentCode))}</bdi></p>` : ""}
+        ${developmentCode ? `<p class="auth-development-code" role="status">کد آزمایشی: <bdi dir="ltr">${escapeHtml(toFaDigits(developmentCode))}</bdi></p>` : ""}
         <button class="btn btn--primary btn--block" type="submit" data-label="تأیید">تأیید</button>
       </form>
       <div class="auth-otp-actions">
@@ -205,6 +206,8 @@ function renderRegisterPage(params, root) {
   });
 
   const form = root.querySelector("#register-form");
+  form.elements.phone.value = registerPhonePrefill;
+  registerPhonePrefill = "";
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     showFormError(form, "");
@@ -283,7 +286,12 @@ function renderLoginPage(params, root) {
       pendingOtpResponse = response;
       navigate("#/otp");
     } catch (error) {
-      showFormError(form, error.message);
+      if (error.registrationRequired) {
+        registerPhonePrefill = phone;
+        navigate("#/register");
+      } else {
+        showFormError(form, error.message);
+      }
     } finally {
       setFormBusy(form, false);
     }

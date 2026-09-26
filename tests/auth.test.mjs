@@ -24,11 +24,17 @@ function setup() {
   return { env, sqlite };
 }
 
-async function call(path, { method = "POST", body, cookie, origin = "http://localhost:8080" } = {}, env) {
+async function call(path, {
+  method = "POST",
+  body,
+  cookie,
+  url = "http://localhost:8787",
+  origin = "http://localhost:8080",
+} = {}, env) {
   const headers = new Headers({ origin });
   if (body !== undefined) headers.set("content-type", "application/json");
   if (cookie) headers.set("cookie", cookie);
-  const request = new Request(`http://localhost:8787${path}`, {
+  const request = new Request(`${url}${path}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -108,7 +114,7 @@ test("registration validates required names and Iranian mobile numbers", async (
   }
 });
 
-test("login issues a local OTP for a known phone and hides unknown accounts", async () => {
+test("login issues a local OTP for known accounts and directs unknown phones to registration", async () => {
   const { env, sqlite } = setup();
 
   try {
@@ -126,10 +132,9 @@ test("login issues a local OTP for a known phone and hides unknown accounts", as
       body: { phone: "09129999999" },
     }, env);
     const unknownBody = await unknown.json();
-    assert.equal(unknown.status, 200);
-    assert.equal(unknownBody.message, knownBody.message);
-    assert.equal(unknownBody.resend_after_seconds, knownBody.resend_after_seconds);
-    assert.equal("development_otp" in unknownBody, false);
+    assert.equal(unknown.status, 404);
+    assert.equal(unknownBody.registration_required, true);
+    assert.match(unknownBody.message, /ابتدا ثبت‌نام کنید/);
     assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM otp_challenges").get().count, 2);
   } finally {
     sqlite.close();
@@ -155,6 +160,42 @@ test("OTP request is throttled and production never returns a development code",
     }, productionEnv);
     assert.equal(unavailable.status, 503);
     assert.equal("development_otp" in await unavailable.json(), false);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("remote development OTP is limited to explicitly allowlisted phone numbers", async () => {
+  const { env, sqlite } = setup();
+
+  try {
+    await register(env);
+    sqlite.prepare("DELETE FROM otp_request_limits").run();
+    const workerUrl = "https://acharak.amirchopan2001.workers.dev";
+    const remoteEnv = {
+      ...env,
+      AUTH_ENV: "production",
+      APP_ORIGIN: workerUrl,
+      DEV_OTP_PHONE_ALLOWLIST: "09121234567",
+    };
+
+    const allowed = await call("/api/auth/login", {
+      body: { phone: "09121234567" },
+      url: workerUrl,
+      origin: workerUrl,
+    }, remoteEnv);
+    const allowedBody = await allowed.json();
+    assert.equal(allowed.status, 200);
+    assert.match(allowedBody.development_otp, /^\d{6}$/);
+
+    const blockedEnv = { ...remoteEnv, DEV_OTP_PHONE_ALLOWLIST: "" };
+    const blocked = await call("/api/auth/login", {
+      body: { phone: "09121234567" },
+      url: workerUrl,
+      origin: workerUrl,
+    }, blockedEnv);
+    assert.equal(blocked.status, 503);
+    assert.equal("development_otp" in await blocked.json(), false);
   } finally {
     sqlite.close();
   }

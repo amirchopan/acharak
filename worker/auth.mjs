@@ -39,13 +39,23 @@ function isLocalHost(hostname) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
 }
 
-function getOtpProvider(request, env) {
+function getOtpProvider(request, env, phone) {
+  const testModeEnabled = env.DEV_OTP_ENABLED === "true";
+  const hostname = new URL(request.url).hostname;
   const localDevelopment =
     env.AUTH_ENV === "development" &&
-    env.DEV_OTP_ENABLED === "true" &&
-    isLocalHost(new URL(request.url).hostname);
+    testModeEnabled &&
+    isLocalHost(hostname);
+  const allowedPhones = String(env.DEV_OTP_PHONE_ALLOWLIST || "")
+    .split(",")
+    .map((value) => normalizePhone(value.trim()))
+    .filter(Boolean);
+  const allowlistedDevelopment =
+    testModeEnabled &&
+    !isLocalHost(hostname) &&
+    allowedPhones.includes(phone);
 
-  return localDevelopment
+  return localDevelopment || allowlistedDevelopment
     ? new LocalDevelopmentOTPProvider()
     : new UnconfiguredOTPProvider();
 }
@@ -250,7 +260,7 @@ async function updateRequestLimit(db, phoneHash, now) {
 }
 
 async function requestOtpForPhone({ db, env, request, phone, user, now }) {
-  const provider = getOtpProvider(request, env);
+  const provider = getOtpProvider(request, env, phone);
   if (provider instanceof UnconfiguredOTPProvider) {
     throw new AuthError("ارسال کد تأیید هنوز برای این محیط پیکربندی نشده است.", 503);
   }
@@ -312,7 +322,7 @@ async function handleRegister(request, env) {
   const phone = normalizePhone(body.phone);
   if (!phone) throw new AuthError("شماره همراه ایرانی معتبر وارد کنید.", 400);
 
-  const provider = getOtpProvider(request, env);
+  const provider = getOtpProvider(request, env, phone);
   if (provider instanceof UnconfiguredOTPProvider) {
     throw new AuthError("ارسال کد تأیید هنوز برای این محیط پیکربندی نشده است.", 503);
   }
@@ -357,12 +367,20 @@ async function handleLogin(request, env) {
   const phone = normalizePhone(body.phone);
   if (!phone) throw new AuthError("شماره همراه ایرانی معتبر وارد کنید.", 400);
 
-  const provider = getOtpProvider(request, env);
+  const user = await getUserByPhone(env.DB, phone);
+  if (!user) {
+    return jsonResponse({
+      success: false,
+      registration_required: true,
+      message: "برای این شماره حسابی پیدا نشد؛ ابتدا ثبت‌نام کنید.",
+    }, 404);
+  }
+
+  const provider = getOtpProvider(request, env, phone);
   if (provider instanceof UnconfiguredOTPProvider) {
     throw new AuthError("ارسال کد تأیید هنوز برای این محیط پیکربندی نشده است.", 503);
   }
 
-  const user = await getUserByPhone(env.DB, phone);
   return requestOtpForPhone({
     db: env.DB,
     env,

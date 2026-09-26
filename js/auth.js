@@ -67,6 +67,7 @@ async function authRequest(path, body, method = body === undefined ? "GET" : "PO
     const error = new Error(result.message || "درخواست انجام نشد.");
     error.status = response.status;
     error.retryAfterSeconds = result.retry_after_seconds;
+    error.registrationRequired = result.registration_required === true;
     throw error;
   }
 

@@ -66,7 +66,7 @@ npx wrangler@4 d1 create acharak-db
 
 شناسهٔ پایگاه دادهٔ موجود در `wrangler.jsonc` به D1 قبلی اشاره می‌کند. اگر همان D1 را نگه می‌دارید، شناسه را تغییر ندهید. اگر پایگاه داده را حذف کرده‌اید، شناسهٔ جدید را در این فایل جایگزین کنید.
 
-برای فعال‌کردن OTP آزمایشی (فقط روی Worker محلی)، فایل تنظیمات محلی بسازید و مقدار نمونهٔ `AUTH_SECRET` را با یک راز تصادفی مختص محیط توسعه عوض کنید:
+برای فعال‌کردن OTP آزمایشی روی Worker محلی، فایل تنظیمات محلی بسازید و مقدار نمونهٔ `AUTH_SECRET` را با یک راز تصادفی مختص محیط توسعه عوض کنید:
 
 ```powershell
 Copy-Item .dev.vars.example .dev.vars
@@ -75,7 +75,7 @@ npm run build:cloudflare
 npx wrangler@4 dev
 ```
 
-Worker محلی، رابط کاربری و API را هم‌زمان ارائه می‌کند و کد شش‌رقمی را فقط برای نمایش آزمایشی در محیط محلی برمی‌گرداند؛ OTP خام در D1 ذخیره نمی‌شود.
+Worker محلی، رابط کاربری و API را هم‌زمان ارائه می‌کند و کد شش‌رقمی را فقط برای نمایش آزمایشی برمی‌گرداند؛ OTP خام در D1 ذخیره نمی‌شود.
 
 در مرورگر `http://localhost:8787/#/register` یا `http://localhost:8787/#/login` را باز کنید.
 
@@ -95,7 +95,9 @@ npx wrangler@4 secret put AUTH_SECRET
 npx wrangler@4 secret put APP_ORIGIN
 ```
 
-`AUTH_SECRET` باید دست‌کم ۳۲ نویسهٔ تصادفی داشته باشد. در پیکربندی پیش‌فرض production ارسال OTP عمداً غیرفعال است؛ تا زمان اتصال یک implementation واقعی از `OTPProvider`، APIهای register/login کد آزمایشی یا SMS ارسال نمی‌کنند و پاسخ عدم‌دسترسی می‌دهند.
+`AUTH_SECRET` باید دست‌کم ۳۲ نویسهٔ تصادفی داشته باشد. در پیکربندی پیش‌فرض production ارسال OTP عمداً غیرفعال است؛ تا زمان اتصال یک implementation واقعی از `OTPProvider`، ثبت‌نام و ورود به حساب‌های موجود کد آزمایشی یا SMS ارسال نمی‌کنند و پاسخ عدم‌دسترسی می‌دهند.
+
+برای آزمایش موقت روی Worker منتشرشده، در Variables تنظیمات Worker مقدار `DEV_OTP_ENABLED=true` را قرار دهید و `DEV_OTP_PHONE_ALLOWLIST` را فقط با شماره‌های آزمایشی مجاز (با پیش‌شمارهٔ ۰۹ و جداشده با کاما) پر کنید؛ `AUTH_ENV` را روی `production` نگه دارید. کد تصادفی فقط برای شماره‌های این allowlist در پاسخ API برمی‌گردد و در صفحهٔ تأیید نمایش داده می‌شود. این روش مالکیت شماره را تأیید نمی‌کند؛ هرکسی که شمارهٔ مجاز را بداند ممکن است وارد حساب شود. آن را فقط برای حساب آزمایشی بدون دادهٔ حساس فعال کنید و برای ورود واقعی، یک ارائه‌دهندهٔ SMS به `OTPProvider` متصل کنید.
 
 برای بازسازی Worker از همین مخزن، پروژه را از شاخهٔ `master` در Cloudflare Workers Builds به GitHub وصل کنید. دستور build را `npm run build:cloudflare` و دستور deploy را `npx wrangler@4 deploy` قرار دهید؛ در deployment محلی نیز `npm run deploy` هر دو مرحله را اجرا می‌کند. نام Worker در `wrangler.jsonc` برابر `acharak` است و در نتیجه رابط و API در `https://acharak.amirchopan2001.workers.dev` در دسترس خواهند بود.
 
@@ -112,7 +114,7 @@ npx wrangler@4 d1 migrations apply acharak-db --remote
 npm run deploy
 ```
 
-پس از انتشار، `https://acharak.amirchopan2001.workers.dev/` باید برنامه را نشان دهد و `https://acharak.amirchopan2001.workers.dev/api/health/db` وضعیت اتصال پایگاه داده را بررسی می‌کند. پس از ساخت Worker، راز `AUTH_SECRET` را تنظیم کنید؛ اگر رابط کاربری و API روی مبدأهای متفاوت هستند، `APP_ORIGIN` را نیز برابر مبدأ دقیق رابط کاربری قرار دهید. در پیکربندی پیش‌فرض production، ارسال OTP تا زمان اتصال SMS provider غیرفعال است و مسیرهای register/login پاسخ `503` می‌دهند؛ OTP آزمایشی فقط روی Worker محلی فعال است.
+پس از انتشار، `https://acharak.amirchopan2001.workers.dev/` باید برنامه را نشان دهد و `https://acharak.amirchopan2001.workers.dev/api/health/db` وضعیت اتصال پایگاه داده را بررسی می‌کند. پس از ساخت Worker، راز `AUTH_SECRET` را تنظیم کنید؛ اگر رابط کاربری و API روی مبدأهای متفاوت هستند، `APP_ORIGIN` را نیز برابر مبدأ دقیق رابط کاربری قرار دهید. در حالت پیش‌فرض production، ارسال OTP تا زمان اتصال SMS provider غیرفعال است و ثبت‌نام/ورود به حساب‌های موجود پاسخ `503` می‌دهند. OTP آزمایشی روی Worker محلی فعال است و در Worker منتشرشده فقط با فعال‌سازی صریح `DEV_OTP_ENABLED` و allowlist شماره‌های آزمایشی کار می‌کند.
 
 ## مسیرهای برنامه
 
