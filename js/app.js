@@ -592,17 +592,12 @@ async function renderDashboardPage(params, root) {
   if (!cars.length) {
     root.innerHTML = `
       <header class="page-header"><h1>داشبورد</h1></header>
-      ${monthlyExpenseCardHtml()}
       <div class="empty-state">
         <span class="empty-state__icon sf">${acIcon("car-front")}</span>
         <h2>هنوز خودرویی ثبت نشده</h2>
         <p>برای شروع، اولین خودروی خود را اضافه کنید.</p>
         <a href="#/cars/new" class="btn btn--primary">افزودن خودرو</a>
       </div>`;
-    root.querySelector(".dash-expense-card__amount").textContent = formatToman(currentMonthExpenses);
-    root.querySelector('a[href="#/reports"]').addEventListener("click", () => {
-      allowReportNavigation = true;
-    });
     removeFab();
     return;
   }
