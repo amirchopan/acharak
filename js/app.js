@@ -572,7 +572,7 @@ function monthlyExpenseCardHtml() {
         <span class="dash-expense-card__label">هزینه‌های این ماه</span>
         <strong class="dash-expense-card__amount"></strong>
       </span>
-      <span class="dash-expense-card__action">ّهد <span class="sf">${acIcon("chevron-left")}</span></span>
+      <span class="dash-expense-card__action">نمایش گزارش<span class="sf">${acIcon("chevron-left")}</span></span>
     </a>`;
 }
 
