@@ -55,7 +55,7 @@ export default {
       return jsonResponse({ success: false, message: "Origin is not allowed." }, 403);
     }
 
-    if (request.method === "OPTIONS") {
+    if (url.pathname.startsWith("/api/") && request.method === "OPTIONS") {
       return addCorsHeaders(new Response(null, {
         status: 204,
         headers: {
@@ -66,31 +66,36 @@ export default {
       }), origin);
     }
 
-    if (url.pathname.startsWith("/api/auth/") || url.pathname === "/api/account/data") {
-      return addCorsHeaders(await handleAuthRequest(request, env), origin);
-    }
+    if (url.pathname.startsWith("/api/")) {
+      if (url.pathname.startsWith("/api/auth/") || url.pathname === "/api/account/data") {
+        return addCorsHeaders(await handleAuthRequest(request, env), origin);
+      }
 
-    if (url.pathname !== "/api/health/db") {
+      if (url.pathname === "/api/health/db") {
+        if (request.method !== "GET") {
+          return new Response(null, {
+            status: 405,
+            headers: { allow: "GET" },
+          });
+        }
+
+        try {
+          const result = await env.DB.prepare("SELECT 1 AS connected").first();
+          if (result?.connected !== 1) {
+            return jsonResponse({ success: false, database: "disconnected" }, 503);
+          }
+
+          return jsonResponse({ success: true, database: "connected" });
+        } catch (error) {
+          console.error("D1 health check failed", error);
+          return jsonResponse({ success: false, database: "disconnected" }, 503);
+        }
+      }
+
       return jsonResponse({ success: false, error: "Not found" }, 404);
     }
 
-    if (request.method !== "GET") {
-      return new Response(null, {
-        status: 405,
-        headers: { allow: "GET" },
-      });
-    }
-
-    try {
-      const result = await env.DB.prepare("SELECT 1 AS connected").first();
-      if (result?.connected !== 1) {
-        return jsonResponse({ success: false, database: "disconnected" }, 503);
-      }
-
-      return jsonResponse({ success: true, database: "connected" });
-    } catch (error) {
-      console.error("D1 health check failed", error);
-      return jsonResponse({ success: false, database: "disconnected" }, 503);
-    }
+    if (env.ASSETS) return env.ASSETS.fetch(request);
+    return jsonResponse({ success: false, error: "Not found" }, 404);
   },
 };

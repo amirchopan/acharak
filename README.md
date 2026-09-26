@@ -52,9 +52,11 @@ http://localhost:8080
 
 برای نصب به‌عنوان اپلیکیشن، از منوی مرورگر گزینه Install یا Add to Home Screen را انتخاب کنید. نصب PWA به `localhost` یا یک اتصال HTTPS نیاز دارد.
 
-## Cloudflare Worker و D1
+## Cloudflare Worker، رابط کاربری و D1
 
-Worker بک‌اند در `worker/index.mjs` و APIهای احراز هویت و اطلاعات حساب در `worker/auth.mjs` قرار دارند. پایگاه داده فقط از طریق binding سمت Worker با نام `DB` در دسترس است. احراز هویت فقط با شماره همراه و OTP است. داده‌های محلی فقط پس از ورود به حساب همگام می‌شوند؛ انتقال داده‌های مهمان نیازمند تأیید کاربر است و در صورت ردکردن، گزینهٔ انجام آن در تنظیمات باقی می‌ماند.
+Worker در `worker/index.mjs` APIهای احراز هویت/اطلاعات حساب و رابط کاربری PWA را از یک مبدأ منتشر می‌کند. فایل‌های عمومی برنامه با `npm run build:cloudflare` به `dist/` کپی می‌شوند؛ فقط فایل‌های HTML، CSS، JavaScript و دارایی‌های لازم برنامه در این پوشه قرار می‌گیرند و سورس Worker، تست‌ها، migrationها و فایل‌های محیطی منتشر نمی‌شوند. مسیرهای `/api/*` به Worker می‌رسند و مسیرهای دیگر رابط کاربری را باز می‌کنند؛ مسیرهای hash مانند `/#/settings` نیز به پوستهٔ SPA برمی‌گردند.
+
+پایگاه داده فقط از طریق binding سمت Worker با نام `DB` در دسترس است. احراز هویت فقط با شماره همراه و OTP است. داده‌های محلی فقط پس از ورود به حساب همگام می‌شوند؛ انتقال داده‌های مهمان نیازمند تأیید کاربر است و در صورت ردکردن، گزینهٔ انجام آن در تنظیمات باقی می‌ماند.
 
 برای ساخت پایگاه دادهٔ Cloudflare و تنظیم شناسهٔ آن در `wrangler.jsonc`:
 
@@ -62,23 +64,20 @@ Worker بک‌اند در `worker/index.mjs` و APIهای احراز هویت و
 npx wrangler@4 d1 create acharak-db
 ```
 
-مقدار `database_id` را با شناسهٔ خروجی این دستور جایگزین کنید؛ مقدار جای‌نگهدار فعلی برای اجرای محلی است و برای انتشار production معتبر نیست.
+شناسهٔ پایگاه دادهٔ موجود در `wrangler.jsonc` به D1 قبلی اشاره می‌کند. اگر همان D1 را نگه می‌دارید، شناسه را تغییر ندهید. اگر پایگاه داده را حذف کرده‌اید، شناسهٔ جدید را در این فایل جایگزین کنید.
 
 برای فعال‌کردن OTP آزمایشی (فقط روی Worker محلی)، فایل تنظیمات محلی بسازید و مقدار نمونهٔ `AUTH_SECRET` را با یک راز تصادفی مختص محیط توسعه عوض کنید:
 
 ```powershell
 Copy-Item .dev.vars.example .dev.vars
 npx wrangler@4 d1 migrations apply acharak-db --local
+npm run build:cloudflare
 npx wrangler@4 dev
 ```
 
-Worker، کد شش‌رقمی را فقط در پاسخ محلی برای نمایش آزمایشی برمی‌گرداند؛ OTP خام در D1 ذخیره نمی‌شود. اجرای Worker محلی به همراه وب‌سرور استاتیک رابط کاربری:
+Worker محلی، رابط کاربری و API را هم‌زمان ارائه می‌کند و کد شش‌رقمی را فقط برای نمایش آزمایشی در محیط محلی برمی‌گرداند؛ OTP خام در D1 ذخیره نمی‌شود.
 
-```powershell
-py -m http.server 8080
-```
-
-در مرورگر، `http://localhost:8080/#/register` یا `http://localhost:8080/#/login` را باز کنید. هر آدرس محلی روی `localhost` یا `127.0.0.1` به‌صورت خودکار به Worker در همان hostname و پورت `8787` وصل می‌شود؛ Worker محلی باید هم‌زمان اجرا باشد. روی سایر hostnameها، URL پیش‌فرض API همان Worker production است. برای Worker دیگری، URL آن را در `meta[name="acharak-api-url"]` در `index.html` تعیین کنید و `APP_ORIGIN` را به مبدأ دقیق رابط کاربری تنظیم کنید؛ برای cookie با `SameSite=Lax` در production، رابط کاربری و API را روی یک سایت (same-site) میزبانی کنید.
+در مرورگر `http://localhost:8787/#/register` یا `http://localhost:8787/#/login` را باز کنید.
 
 وضعیت migration محلی و health endpoint (Worker باید در ترمینال جداگانه فعال باشد) و تست‌ها:
 
@@ -98,14 +97,22 @@ npx wrangler@4 secret put APP_ORIGIN
 
 `AUTH_SECRET` باید دست‌کم ۳۲ نویسهٔ تصادفی داشته باشد. در پیکربندی پیش‌فرض production ارسال OTP عمداً غیرفعال است؛ تا زمان اتصال یک implementation واقعی از `OTPProvider`، APIهای register/login کد آزمایشی یا SMS ارسال نمی‌کنند و پاسخ عدم‌دسترسی می‌دهند.
 
-پس از ورود به حساب Cloudflare و تنظیم `database_id`، migration و انتشار production:
+برای بازسازی Worker از همین مخزن، پروژه را از شاخهٔ `master` در Cloudflare Workers Builds به GitHub وصل کنید. دستور build را `npm run build:cloudflare` و دستور deploy را `npx wrangler@4 deploy` قرار دهید؛ در deployment محلی نیز `npm run deploy` هر دو مرحله را اجرا می‌کند. نام Worker در `wrangler.jsonc` برابر `acharak` است و در نتیجه رابط و API در `https://acharak.amirchopan2001.workers.dev` در دسترس خواهند بود.
+
+اگر پایگاه دادهٔ D1 قبلی را نگه می‌دارید، شناسهٔ موجود `database_id` را در `wrangler.jsonc` حفظ کنید. اگر D1 را هم حذف می‌کنید، ابتدا پایگاه دادهٔ جدید بسازید و شناسهٔ خروجی را جایگزین کنید:
+
+```powershell
+npx wrangler@4 d1 create acharak-db
+```
+
+پس از اتصال حساب Cloudflare و تنظیم شناسهٔ D1، migrationها را اجرا و Worker را منتشر کنید. اگر نام کاربری `workers.dev` حساب با نشانی نمونه فرق دارد، hostname جدید را هم در `js/auth.js` به‌روزرسانی کنید:
 
 ```powershell
 npx wrangler@4 d1 migrations apply acharak-db --remote
-npx wrangler@4 deploy
+npm run deploy
 ```
 
-پس از انتشار، endpoint سلامتی را در `https://<worker-url>/api/health/db` بررسی کنید. اجرای migration دوم، اطلاعات کاربران موجود و روابطشان را حفظ می‌کند، نام قبلی را به `first_name` منتقل می‌کند و ستون `password_hash` را حذف می‌کند. تا زمان پیاده‌سازی SMS provider، register/login در production با پاسخ `503` غیرفعال هستند؛ ارسال OTP آزمایشی فقط روی Worker محلی فعال است.
+پس از انتشار، `https://acharak.amirchopan2001.workers.dev/` باید برنامه را نشان دهد و `https://acharak.amirchopan2001.workers.dev/api/health/db` وضعیت اتصال پایگاه داده را بررسی می‌کند. پس از ساخت Worker، راز `AUTH_SECRET` را تنظیم کنید؛ اگر رابط کاربری و API روی مبدأهای متفاوت هستند، `APP_ORIGIN` را نیز برابر مبدأ دقیق رابط کاربری قرار دهید. در پیکربندی پیش‌فرض production، ارسال OTP تا زمان اتصال SMS provider غیرفعال است و مسیرهای register/login پاسخ `503` می‌دهند؛ OTP آزمایشی فقط روی Worker محلی فعال است.
 
 ## مسیرهای برنامه
 

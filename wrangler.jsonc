@@ -1,8 +1,14 @@
 {
-  "name": "acharak-api",
+  "name": "acharak",
   "main": "worker/index.mjs",
   "compatibility_date": "2026-09-25",
   "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
   "vars": {
     "AUTH_ENV": "production"
   },

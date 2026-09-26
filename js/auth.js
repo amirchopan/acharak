@@ -4,7 +4,7 @@ const state = {
   loading: true,
 };
 
-const PRODUCTION_API_URL = "https://acharak-api.amirchopan2001.workers.dev";
+const PRODUCTION_API_URL = "https://acharak.amirchopan2001.workers.dev";
 let authSuccessHandler = null;
 
 function getApiBaseUrl() {

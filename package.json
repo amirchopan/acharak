@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:cloudflare": "node scripts/build-cloudflare.mjs",
+    "deploy": "npm run build:cloudflare && npx wrangler@4 deploy",
     "test": "node --test"
   }
 }

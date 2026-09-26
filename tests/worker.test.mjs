@@ -75,3 +75,43 @@ test("unknown paths and non-GET health requests are rejected", async () => {
   assert.equal(methodNotAllowed.status, 405);
   assert.equal(methodNotAllowed.headers.get("allow"), "GET");
 });
+
+test("non-API requests are served from the configured static asset binding", async () => {
+  let requestedUrl;
+  const response = await worker.fetch(
+    new Request("https://acharak.example/"),
+    {
+      ASSETS: {
+        async fetch(request) {
+          requestedUrl = request.url;
+          return new Response("<!doctype html><title>آچارک</title>", {
+            headers: { "content-type": "text/html; charset=utf-8" },
+          });
+        },
+      },
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /آچارک/);
+  assert.equal(requestedUrl, "https://acharak.example/");
+});
+
+test("unknown API routes remain JSON 404 responses instead of falling back to the SPA", async () => {
+  const response = await worker.fetch(
+    new Request("https://acharak.example/api/unknown"),
+    {
+      ASSETS: {
+        async fetch() {
+          assert.fail("API paths must never fall through to static assets.");
+        },
+      },
+    },
+  );
+
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), {
+    success: false,
+    error: "Not found",
+  });
+});

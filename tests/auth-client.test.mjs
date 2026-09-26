@@ -52,3 +52,17 @@ test("unreachable local Workers show an actionable connection error", async () =
     /http:\/\/127\.0\.0\.1:8787.*npx wrangler@4 dev/,
   );
 });
+
+test("production requests use the recreated application Worker hostname", async () => {
+  globalThis.window.location.hostname = "acharak.amirchopan2001.workers.dev";
+  globalThis.fetch = async (url) => {
+    assert.equal(url, "https://acharak.amirchopan2001.workers.dev/api/auth/login");
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const productionAuth = await import("../js/auth.js?production-worker-test");
+  await productionAuth.loginWithPhone({ phone: "09121234567" });
+  globalThis.window.location.hostname = "127.0.0.1";
+});
