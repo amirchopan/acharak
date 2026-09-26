@@ -16,6 +16,27 @@ const STORES = {
 };
 
 let dbPromise = null;
+let dataChangeListener = null;
+let dataChangeSuppression = 0;
+
+function notifyDataChanged() {
+  if (dataChangeListener && !dataChangeSuppression) {
+    queueMicrotask(() => dataChangeListener());
+  }
+}
+
+function setDataChangeListener(listener) {
+  dataChangeListener = listener;
+}
+
+async function withoutDataChangeNotifications(callback) {
+  dataChangeSuppression += 1;
+  try {
+    return await callback();
+  } finally {
+    dataChangeSuppression -= 1;
+  }
+}
 
 /** پیش‌فرض فهرست خدمات سرویس (قابل ویرایش توسط کاربر بعدا) */
 const DEFAULT_CATALOG = [
@@ -281,7 +302,7 @@ async function getByIndex(storeName, indexName, value) {
 const CarsAPI = {
   getAll: () => getAll(STORES.CARS),
   getById: (id) => getById(STORES.CARS, id),
-  save: (car) => put(STORES.CARS, car),
+  save: async (car) => { await put(STORES.CARS, car); notifyDataChanged(); },
   delete: async (id) => {
     await remove(STORES.CARS, id);
     const services = await getByIndex(STORES.SERVICES, 'carId', id);
@@ -290,6 +311,7 @@ const CarsAPI = {
     await Promise.all(reminders.map((r) => remove(STORES.REMINDERS, r.id)));
     const maintenance = await getByIndex(STORES.MAINTENANCE, 'carId', id);
     await Promise.all(maintenance.map((m) => remove(STORES.MAINTENANCE, m.id)));
+    notifyDataChanged();
   },
 };
 
@@ -299,8 +321,8 @@ const ServicesAPI = {
   getAll: () => getAll(STORES.SERVICES),
   getById: (id) => getById(STORES.SERVICES, id),
   getByCarId: (carId) => getByIndex(STORES.SERVICES, 'carId', carId),
-  save: (service) => put(STORES.SERVICES, service),
-  delete: (id) => remove(STORES.SERVICES, id),
+  save: async (service) => { await put(STORES.SERVICES, service); notifyDataChanged(); },
+  delete: async (id) => { await remove(STORES.SERVICES, id); notifyDataChanged(); },
 };
 
 /* ================= یادآور ================= */
@@ -309,8 +331,8 @@ const RemindersAPI = {
   getAll: () => getAll(STORES.REMINDERS),
   getById: (id) => getById(STORES.REMINDERS, id),
   getByCarId: (carId) => getByIndex(STORES.REMINDERS, 'carId', carId),
-  save: (reminder) => put(STORES.REMINDERS, reminder),
-  delete: (id) => remove(STORES.REMINDERS, id),
+  save: async (reminder) => { await put(STORES.REMINDERS, reminder); notifyDataChanged(); },
+  delete: async (id) => { await remove(STORES.REMINDERS, id); notifyDataChanged(); },
 };
 
 /* ================= نگهداری قطعات ================= */
@@ -319,8 +341,8 @@ const MaintenanceAPI = {
   getAll: () => getAll(STORES.MAINTENANCE),
   getById: (id) => getById(STORES.MAINTENANCE, id),
   getByCarId: (carId) => getByIndex(STORES.MAINTENANCE, 'carId', carId),
-  save: (item) => put(STORES.MAINTENANCE, item),
-  delete: (id) => remove(STORES.MAINTENANCE, id),
+  save: async (item) => { await put(STORES.MAINTENANCE, item); notifyDataChanged(); },
+  delete: async (id) => { await remove(STORES.MAINTENANCE, id); notifyDataChanged(); },
   /** آخرین رکورد هر partId برای یک خودرو */
   getLatestByCarId: async (carId) => {
     const all = await getByIndex(STORES.MAINTENANCE, 'carId', carId);
@@ -354,8 +376,8 @@ const CatalogAPI = {
     await ensureCatalogSeeded();
     return getAll(STORES.CATALOG);
   },
-  save: (item) => put(STORES.CATALOG, item),
-  delete: (id) => remove(STORES.CATALOG, id),
+  save: async (item) => { await put(STORES.CATALOG, item); notifyDataChanged(); },
+  delete: async (id) => { await remove(STORES.CATALOG, id); notifyDataChanged(); },
 };
 
 /* ================= تنظیمات ================= */
@@ -365,10 +387,50 @@ const SettingsAPI = {
     const rec = await getById(STORES.SETTINGS, key);
     return rec ? rec.value : defaultValue;
   },
-  set: (key, value) => put(STORES.SETTINGS, { key, value }),
+  set: async (key, value) => {
+    await put(STORES.SETTINGS, { key, value });
+    if (key === 'theme') notifyDataChanged();
+  },
 };
+
+async function getAccountSnapshot() {
+  const [cars, services, reminders, catalog, maintenance] = await Promise.all([
+    CarsAPI.getAll(),
+    ServicesAPI.getAll(),
+    RemindersAPI.getAll(),
+    CatalogAPI.getAll(),
+    MaintenanceAPI.getAll(),
+  ]);
+  return {
+    cars,
+    services,
+    reminders,
+    catalog,
+    maintenance,
+    settings: { theme: await SettingsAPI.get('theme', 'auto') },
+  };
+}
+
+async function replaceAccountSnapshot(snapshot) {
+  const collections = [
+    [STORES.CARS, snapshot.cars],
+    [STORES.SERVICES, snapshot.services],
+    [STORES.REMINDERS, snapshot.reminders],
+    [STORES.CATALOG, snapshot.catalog],
+    [STORES.MAINTENANCE, snapshot.maintenance],
+  ];
+  await Promise.all(collections.map(([storeName, items]) =>
+    tx(storeName, 'readwrite', (store) => {
+      store.clear();
+      items.forEach((item) => store.put(item));
+    }),
+  ));
+  await SettingsAPI.set('theme', snapshot.settings?.theme || 'auto');
+}
 
 export {
   DB_NAME, STORES, REMINDER_TITLES, DEFAULT_CATALOG, DEFAULT_PARTS,
   openDB, CarsAPI, ServicesAPI, RemindersAPI, CatalogAPI, MaintenanceAPI, SettingsAPI,
+  getAccountSnapshot, replaceAccountSnapshot, setDataChangeListener,
+  withoutDataChangeNotifications,
 };

@@ -16,6 +16,17 @@ import {
   DEFAULT_PARTS,
 } from "./database.js";
 import { downloadBackupFile, importFromFile } from "./storage.js";
+import { getAuthState, initializeAuth, logout } from "./auth.js";
+import {
+  initializeAccountSync,
+  syncAuthenticatedAccount,
+  syncPendingGuestData,
+} from "./account-sync.js";
+import {
+  renderLoginPage,
+  renderOtpPage,
+  renderRegisterPage,
+} from "./auth-ui.js";
 import {
   showToast,
   showAlert,
@@ -184,6 +195,8 @@ const INS_PAYMENT_ROWS = [
   })),
 ];
 
+let allowReportNavigation = false;
+
 function createEmptyInsurance() {
   return {
     fromDate: "",
@@ -280,12 +293,46 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 /* ==================== شروع برنامه ==================== */
 
-async function bootstrap() {
+let bootstrapPromise = null;
+
+function bootstrap() {
+  if (!bootstrapPromise) bootstrapPromise = startApplication();
+  return bootstrapPromise;
+}
+
+async function startApplication() {
   await initTheme();
+  initializeAccountSync({
+    confirm: () => showAlert({
+      title: "همگام‌سازی اطلاعات",
+      message: "در این دستگاه خودرو یا سرویس مهمان ثبت شده است. می‌خواهید آن‌ها را به حساب کاربری‌تان اضافه کنید تا در دستگاه‌های دیگر هم در دسترس باشند؟",
+      confirmText: "همگام‌سازی",
+      cancelText: "فعلاً نه",
+    }),
+    onError: () => showToast("دریافت یا همگام‌سازی اطلاعات حساب انجام نشد. اتصال اینترنت و Worker را بررسی کنید.", "error"),
+  });
+  const authInitialization = initializeAuth();
   await loadCarCatalog(); // قبل از روت‌ها
   registerServiceWorker();
   registerAllRoutes();
+  const authState = await authInitialization;
+  if (authState.authenticated) {
+    try {
+      await syncAuthenticatedAccount(authState.user);
+    } catch (error) {
+      console.error("Unable to load account data.", error);
+      showToast("دریافت اطلاعات حساب انجام نشد. اتصال اینترنت را بررسی کنید.", "error");
+    }
+  }
   initRouter();
+  const route = window.location.hash.split("?")[0];
+  if (
+    route === "#/settings" ||
+    (authState.authenticated &&
+      ["#/register", "#/login", "#/otp"].includes(route))
+  ) {
+    navigate(authState.authenticated ? "#/dashboard" : route);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", bootstrap);
@@ -294,6 +341,9 @@ if (document.readyState !== "loading") bootstrap();
 /* ==================== ثبت مسیرها ==================== */
 
 function registerAllRoutes() {
+  registerRoute("#/register", renderRegisterPage);
+  registerRoute("#/login", renderLoginPage);
+  registerRoute("#/otp", renderOtpPage);
   registerRoute("#/dashboard", renderDashboardPage);
   registerRoute("#/cars", renderCarsListPage);
   registerRoute("#/cars/new", renderCarFormPage);
@@ -304,6 +354,9 @@ function registerAllRoutes() {
   registerRoute("#/maintenance", renderMaintenancePage);
   registerRoute("#/reports", renderReportsPage);
   registerRoute("#/settings", renderSettingsPage);
+  registerRoute("#/settings/account", renderAccountSettingsPage);
+  registerRoute("#/settings/appearance", renderAppearanceSettingsPage);
+  registerRoute("#/settings/notifications", renderNotificationSettingsPage);
 }
 
 /* ==================================================
@@ -382,7 +435,7 @@ function renderLinearBarHtml(title, gauge, extraSub = "") {
         <div class="maint-bar__head">
           <span class="maint-bar__title">${escapeHtml(title)}</span>
           <span class="maint-bar__meta">ثبت نشده</span>
-        </div>
+        </section>
         <div class="maint-bar__track"><div class="maint-bar__fill" style="width:0%"></div></div>
       </div>`;
   }
@@ -511,20 +564,45 @@ async function syncOilMaintenanceFromService(service) {
    صفحه داشبورد
    ================================================== */
 
+function monthlyExpenseCardHtml() {
+  return `
+    <a href="#/reports" class="dash-expense-card" aria-label=" هزینه‌های این ماه">
+      <span class="dash-expense-card__icon sf">${acIcon("money")}</span>
+      <span class="dash-expense-card__content">
+        <span class="dash-expense-card__label">هزینه‌های این ماه</span>
+        <strong class="dash-expense-card__amount"></strong>
+      </span>
+      <span class="dash-expense-card__action">ّهد <span class="sf">${acIcon("chevron-left")}</span></span>
+    </a>`;
+}
+
+function getMonthlyExpenseTotal(cars, services) {
+  const monthServices = filterServicesByRange(services, "month");
+  return monthServices.reduce((sum, service) => sum + getServiceTotalCost(service), 0) +
+    cars.flatMap((car) => getCarExpenseEntries(car, "month"))
+      .reduce((sum, entry) => sum + entry.amount, 0);
+}
+
 async function renderDashboardPage(params, root) {
   renderTabBar("#/dashboard");
   const cars = await CarsAPI.getAll();
   const allServices = await ServicesAPI.getAll();
+  const currentMonthExpenses = getMonthlyExpenseTotal(cars, allServices);
 
   if (!cars.length) {
     root.innerHTML = `
       <header class="page-header"><h1>داشبورد</h1></header>
+      ${monthlyExpenseCardHtml()}
       <div class="empty-state">
         <span class="empty-state__icon sf">${acIcon("car-front")}</span>
         <h2>هنوز خودرویی ثبت نشده</h2>
         <p>برای شروع، اولین خودروی خود را اضافه کنید.</p>
         <a href="#/cars/new" class="btn btn--primary">افزودن خودرو</a>
       </div>`;
+    root.querySelector(".dash-expense-card__amount").textContent = formatToman(currentMonthExpenses);
+    root.querySelector('a[href="#/reports"]').addEventListener("click", () => {
+      allowReportNavigation = true;
+    });
     removeFab();
     return;
   }
@@ -539,6 +617,7 @@ async function renderDashboardPage(params, root) {
     <header class="page-header"><h1>داشبورد</h1></header>
     <section class="dash-car-strip"></section>
     <section class="dash-summary card"></section>
+    ${monthlyExpenseCardHtml()}
     <section class="dash-docs" id="dash-docs"></section>
     <section class="dash-maintenance card" id="dash-maintenance"></section>
     <section class="dash-quick">
@@ -552,12 +631,18 @@ async function renderDashboardPage(params, root) {
       <div class="dash-recent__list"></div>
     </section>
   `;
+  root.querySelectorAll('a[href="#/reports"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      allowReportNavigation = true;
+    });
+  });
 
   const strip = root.querySelector(".dash-car-strip");
   const summary = root.querySelector(".dash-summary");
   const maintSection = root.querySelector("#dash-maintenance");
   const quickButtons = root.querySelector(".dash-quick__buttons");
   const recentList = root.querySelector(".dash-recent__list");
+  root.querySelector(".dash-expense-card__amount").textContent = formatToman(currentMonthExpenses);
   let maintExpanded = false;
 
   function dashboardCarModel(car) {
@@ -1185,11 +1270,11 @@ async function renderCarFormPage(params, root) {
       </div>
 
             <div class="field">
-        <button type="button" class="text-input text-input--button other-spec-trigger">
+        <button type="button" class="text-input text-input--button other-spec-trigger" aria-expanded="false" aria-controls="other-spec-panel">
           <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
           <span class="other-spec-trigger__text">مشخصات دیگر (نوع سوخت، عنوان و تصویر)</span>
         </button>
-        <div class="other-spec-panel" hidden>
+        <div class="other-spec-panel" id="other-spec-panel" hidden>
           <div class="other-spec-panel__inner">
             <div class="field">
               <label class="field__label-with-icon"><span class="sf field__label-icon">${acIcon("generic-fuel-pump")}</span>نوع سوخت</label>
@@ -1209,7 +1294,7 @@ async function renderCarFormPage(params, root) {
 
       <div class="field">
         <div class="other-spec-trigger-row">
-          <button type="button" class="text-input text-input--button other-spec-trigger" id="inspection-trigger">
+          <button type="button" class="text-input text-input--button other-spec-trigger" id="inspection-trigger" aria-expanded="false" aria-controls="inspection-panel">
             <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
             <span class="other-spec-trigger__text">معاینه فنی خودرو (اختیاری)</span>
           </button>
@@ -1248,7 +1333,7 @@ async function renderCarFormPage(params, root) {
 
       <div class="field">
         <div class="other-spec-trigger-row">
-          <button type="button" class="text-input text-input--button other-spec-trigger" id="insurance-trigger">
+          <button type="button" class="text-input text-input--button other-spec-trigger" id="insurance-trigger" aria-expanded="false" aria-controls="insurance-panel">
             <span class="sf other-spec-trigger__chevron">${acIcon("chevron-down")}</span>
             <span class="other-spec-trigger__text">بیمه‌نامه خودرو (اختیاری)</span>
           </button>
@@ -1638,11 +1723,12 @@ async function renderCarFormPage(params, root) {
   // مشخصات دیگر (نمایش درون‌خطی به‌جای پاپ‌آپ)
   const otherSpecTrigger = root.querySelector(".other-spec-trigger");
   const otherSpecPanel = root.querySelector(".other-spec-panel");
-  let otherSpecOpen = !!(state.fuelType || state.otherSpecTitle || state.photo);
+  let otherSpecOpen = false;
 
   function renderOtherSpecToggleState() {
     otherSpecTrigger.classList.toggle("is-open", otherSpecOpen);
     otherSpecPanel.classList.toggle("is-open", otherSpecOpen);
+    otherSpecTrigger.setAttribute("aria-expanded", String(otherSpecOpen));
     if (otherSpecOpen) {
       otherSpecPanel.hidden = false;
     } else {
@@ -1714,16 +1800,13 @@ async function renderCarFormPage(params, root) {
   /* ---------- معاینه فنی خودرو ---------- */
   const inspectionTrigger = root.querySelector("#inspection-trigger");
   const inspectionPanel = root.querySelector("#inspection-panel");
-  let inspectionOpen = !!(
-    state.inspection.date ||
-    state.inspection.cost ||
-    state.inspection.photos.length
-  );
+  let inspectionOpen = false;
   let expiryManuallyEdited =
     !!state.inspection.expiryDate && !!state.inspection.date;
 
   function toggleCollapsible(trigger, panel, open) {
     trigger.classList.toggle("is-open", open);
+    trigger.setAttribute("aria-expanded", String(open));
     panel.classList.toggle("is-open", open);
     if (open) {
       panel.hidden = false;
@@ -1791,8 +1874,8 @@ async function renderCarFormPage(params, root) {
           },
         }),
       );
-      inspectionTrigger.classList.remove("is-open");
-      inspectionPanel.hidden = true;
+      inspectionOpen = false;
+      toggleCollapsible(inspectionTrigger, inspectionPanel, inspectionOpen);
     });
   if (inspectionOpen) {
     inspectionPanel.hidden = false;
@@ -1856,7 +1939,7 @@ async function renderCarFormPage(params, root) {
   /* ---------- بیمه‌نامه خودرو ---------- */
   const insuranceTrigger = root.querySelector("#insurance-trigger");
   const insurancePanel = root.querySelector("#insurance-panel");
-  let insuranceOpen = !!state.insurance.fromDate;
+  let insuranceOpen = false;
 
   insuranceTrigger.addEventListener("click", () => {
     insuranceOpen = !insuranceOpen;
@@ -3984,6 +4067,11 @@ function getCarExpenseEntries(car, range, customRange) {
 }
 
 async function renderReportsPage(params, root) {
+  if (!allowReportNavigation) {
+    navigate("#/dashboard");
+    return;
+  }
+  allowReportNavigation = false;
   renderTabBar("#/dashboard");
   removeFab();
 
@@ -4292,89 +4380,116 @@ const APP_VERSION = "1.0";
 async function renderSettingsPage(params, root) {
   renderTabBar("#/settings");
   removeFab();
-  const [reminders, cars] = await Promise.all([
-    RemindersAPI.getAll(),
-    CarsAPI.getAll(),
-  ]);
-  const carsById = Object.fromEntries(cars.map((c) => [c.id, c]));
-  const currentTheme = await SettingsAPI.get("theme", "auto");
-
+  const reminders = await RemindersAPI.getAll();
+  const authState = getAuthState();
   const activeRemindersCount = reminders.filter((r) => !r.done).length;
+  const pendingGuestData = await SettingsAPI.get("pendingGuestData");
+  const pendingGuestUser = await SettingsAPI.get("pendingGuestUser");
+  const hasPendingGuestSync = !!pendingGuestData
+    && authState.authenticated
+    && pendingGuestUser === authState.user?.id;
+  const accountName = authState.user
+    ? [authState.user.first_name, authState.user.last_name].filter(Boolean).join(" ")
+    : "";
 
   root.innerHTML = `
-    <header class="page-header"><h1>تنظیمات</h1></header>
+    <header class="page-header settings-page-header">
+      <div>
+        <h1>تنظیمات</h1>
+      </div>
+    </header>
 
-    <section class="section-block">
-      <div class="section-block__header"><h2><span class="sf section-block__icon">${acIcon("bell")}</span>اعلان‌ها</h2></div>
-      <button type="button" class="settings-nav-row" id="open-reminders-btn">
-        <span class="settings-nav-row__icon sf">${acIcon("bell")}</span>
-        <span class="settings-nav-row__text">
-          <span class="settings-nav-row__title">مدیریت یادآوری‌ها</span>
-          <span class="settings-nav-row__sub">${activeRemindersCount ? toFaDigits(activeRemindersCount) + " یادآوری فعال" : "یادآوری فعالی وجود ندارد"}</span>
-        </span>
-        <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
-      </button>
-    </section>
-
-    <section class="section-block">
-      <div class="section-block__header"><h2><span class="sf section-block__icon">${acIcon("money")}</span>گزارش‌ها</h2></div>
-      <a href="#/reports" class="settings-nav-row">
-        <span class="settings-nav-row__icon sf">${acIcon("money")}</span>
-        <span class="settings-nav-row__text">
-          <span class="settings-nav-row__title">گزارش هزینه‌ها</span>
-          <span class="settings-nav-row__sub">نمودار و تفکیک هزینه‌های ثبت‌شده</span>
-        </span>
-        <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
-      </a>
-    </section>
-
-    <section class="section-block">
-      <div class="section-block__header"><h2><span class="sf section-block__icon">${acIcon("theme")}</span>ظاهر برنامه</h2></div>
-      <div class="theme-toggle"></div>
-    </section>
-
-    <section class="section-block">
-      <div class="section-block__header"><h2><span class="sf section-block__icon">${acIcon("cloud-download-upload")}</span>پشتیبان‌گیری اطلاعات</h2></div>
-      <div class="settings-actions">
-        <button type="button" class="btn btn--secondary btn--block" id="backup-btn"><span class="sf">${acIcon("download-cloud")}</span>تهیه نسخه پشتیبان JSON</button>
-        <label class="btn btn--secondary btn--block" for="import-file-input"><span class="sf">${acIcon("upload-cloud")}</span>ورود اطلاعات از فایل JSON</label>
-        <input type="file" accept="application/json" id="import-file-input" style="display:none" />
+    <section class="settings-group">
+      <h2 class="settings-group__title">حساب کاربری</h2>
+      <div class="settings-reference-list">
+        <a href="#/settings/account" class="settings-nav-row">
+          <span class="settings-nav-row__icon sf">${acIcon("company-account")}</span>
+          <span class="settings-nav-row__text">
+            <span class="settings-nav-row__title">${authState.authenticated ? escapeHtml(accountName || "اطلاعات حساب") : "ورود یا ساخت حساب کاربری"}</span>
+            <span class="settings-nav-row__sub">${authState.authenticated ? escapeHtml(authState.user.phone) : "همگام‌سازی اطلاعات بین دستگاه‌ها"}</span>
+          </span>
+          <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
+        </a>
       </div>
     </section>
 
-    <p class="settings-footnote">${escapeHtml(APP_NAME)} · نسخه ${APP_VERSION}</p>
+    <section class="settings-group">
+      <h2 class="settings-group__title">عمومی</h2>
+      <div class="settings-reference-list">
+        <a href="#/settings/appearance" class="settings-nav-row">
+          <span class="settings-nav-row__icon sf">${acIcon("theme")}</span>
+          <span class="settings-nav-row__text">
+            <span class="settings-nav-row__title">ظاهر برنامه</span>
+            <span class="settings-nav-row__sub">پوسته روشن، تیره یا خودکار</span>
+          </span>
+          <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
+        </a>
+        <a href="#/settings/notifications" class="settings-nav-row">
+          <span class="settings-nav-row__icon sf">${acIcon("bell")}</span>
+          <span class="settings-nav-row__text">
+            <span class="settings-nav-row__title">یادآوری‌ها</span>
+            <span class="settings-nav-row__sub">${activeRemindersCount ? toFaDigits(activeRemindersCount) + " یادآوری فعال" : "مدیریت یادآوری‌های خودرو"}</span>
+          </span>
+          <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="settings-group">
+      <h2 class="settings-group__title">ذخیره و بازیابی اطلاعات</h2>
+      <div class="settings-reference-list">
+        ${hasPendingGuestSync ? `
+          <button type="button" class="settings-nav-row" id="sync-guest-data-btn">
+            <span class="settings-nav-row__icon sf">${acIcon("cloud-download-upload")}</span>
+            <span class="settings-nav-row__text">
+              <span class="settings-nav-row__title">همگام‌سازی اطلاعات این دستگاه</span>
+              <span class="settings-nav-row__sub">افزودن خودروها و سرویس‌های مهمان به حساب</span>
+            </span>
+            <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
+          </button>` : ""}
+        <button type="button" class="settings-nav-row" id="backup-btn">
+          <span class="settings-nav-row__icon sf">${acIcon("download-cloud")}</span>
+          <span class="settings-nav-row__text">
+            <span class="settings-nav-row__title">تهیه نسخه پشتیبان</span>
+            <span class="settings-nav-row__sub">ذخیره اطلاعات در قالب فایل JSON</span>
+          </span>
+          <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
+        </button>
+        <label class="settings-nav-row" for="import-file-input">
+          <span class="settings-nav-row__icon sf">${acIcon("upload-cloud")}</span>
+          <span class="settings-nav-row__text">
+            <span class="settings-nav-row__title">بازیابی از فایل</span>
+            <span class="settings-nav-row__sub">افزودن اطلاعات از نسخه پشتیبان JSON</span>
+          </span>
+          <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
+        </label>
+        <input type="file" accept="application/json" id="import-file-input" class="settings-file-input" />
+      </div>
+    </section>
+
+    <p class="settings-footnote">${escapeHtml(APP_NAME.replace(" (نسخه آزمایشی)", ""))} · نسخه ${toFaDigits(APP_VERSION)}</p>
   `;
 
-  // اعلان‌ها -> صفحه اختصاصی مدیریت یادآوری‌ها
-  root.querySelector("#open-reminders-btn").addEventListener("click", () => {
-    openRemindersManagerPage(reminders, carsById);
+  root.querySelector("#sync-guest-data-btn")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await syncPendingGuestData();
+      showToast("اطلاعات مهمان با حساب شما همگام شد", "success");
+      navigate("#/dashboard");
+    } catch (error) {
+      button.disabled = false;
+      showToast(error.message || "همگام‌سازی انجام نشد", "error");
+    }
   });
 
-  // تم
-  root.querySelector(".theme-toggle").appendChild(
-    createSegmentedControl(
-      [
-        { label: "خودکار", value: "خودکار", icon: "monitor" },
-        { label: "روز", value: "روز", icon: "sun" },
-        { label: "شب", value: "شب", icon: "moon" },
-      ],
-      currentTheme === "light"
-        ? "روز"
-        : currentTheme === "dark"
-          ? "شب"
-          : "خودکار",
-      async (val) => {
-        const mode = val === "روز" ? "light" : val === "شب" ? "dark" : "auto";
-        await setTheme(mode);
-        showToast("ظاهر برنامه تغییر کرد", "success");
-      },
-    ),
-  );
-
-  // پشتیبان‌گیری (JSON)
   root.querySelector("#backup-btn").addEventListener("click", async () => {
-    await downloadBackupFile();
-    showToast("نسخه پشتیبان ذخیره شد", "success");
+    try {
+      await downloadBackupFile();
+      showToast("نسخه پشتیبان ذخیره شد", "success");
+    } catch (error) {
+      showToast(error.message || "تهیه نسخه پشتیبان انجام نشد", "error");
+    }
   });
   root
     .querySelector("#import-file-input")
@@ -4400,6 +4515,156 @@ async function renderSettingsPage(params, root) {
       }
       e.target.value = "";
     });
+}
+
+async function renderAccountSettingsPage(params, root) {
+  renderTabBar("#/settings");
+  removeFab();
+  const authState = getAuthState();
+  root.innerHTML = `
+    <header class="page-header page-header--form">
+      <a href="#/settings" class="page-header__back sf" aria-label="بازگشت">${acIcon("chevron-right")}</a>
+      <h1>اطلاعات حساب</h1>
+    </header>
+    ${authState.authenticated ? `
+      <section class="account-profile-card">
+        <span class="account-profile-card__avatar sf">${acIcon("company-account")}</span>
+        <span class="account-profile-card__copy">
+          <strong>${escapeHtml([authState.user.first_name, authState.user.last_name].filter(Boolean).join(" ") || "کاربر آچارک")}</strong>
+          <span>حساب آچارک</span>
+        </span>
+      </section>
+      <section class="account-info-card" aria-label="مشخصات حساب">
+        <div class="account-info-row">
+          <span class="account-info-row__icon sf">${acIcon("company-account")}</span>
+          <span class="account-info-row__content"><span>نام و نام خانوادگی</span><strong>${escapeHtml([authState.user.first_name, authState.user.last_name].filter(Boolean).join(" ") || "—")}</strong></span>
+        </div>
+        <div class="account-info-row">
+          <span class="account-info-row__icon sf">${acIcon("info")}</span>
+          <span class="account-info-row__content"><span>شماره همراه</span><strong dir="ltr">${escapeHtml(authState.user.phone)}</strong></span>
+        </div>
+      </section>
+      <button type="button" class="btn btn--secondary btn--block settings-logout" id="auth-logout-btn"><span class="sf">${acIcon("close")}</span>خروج از حساب کاربری</button>
+    ` : `
+      <section class="account-guest-card">
+        <span class="account-guest-card__icon sf">${acIcon("company-account")}</span>
+        <h2>همراه آچارک باشید</h2>
+        <p>با حساب کاربری، اطلاعات خودروها و سرویس‌هایتان را بین دستگاه‌ها همگام کنید.</p>
+      </section>
+      <section class="settings-auth-actions">
+        <a class="btn btn--primary btn--block" href="#/login"><span class="sf">${acIcon("company-account")}</span>ورود با شماره همراه</a>
+        <a class="btn btn--secondary btn--block" href="#/register"><span class="sf">${acIcon("plus")}</span>ساخت حساب کاربری</a>
+      </section>
+    `}
+  `;
+  root.querySelector("#auth-logout-btn")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await logout();
+      showToast("از حساب کاربری خارج شدید", "success");
+      navigate("#/settings");
+    } catch (error) {
+      button.disabled = false;
+      showToast(error.message, "error");
+    }
+  });
+}
+
+async function renderAppearanceSettingsPage(params, root) {
+  removeFab();
+  document.getElementById("tab-bar")?.remove();
+  const currentTheme = await SettingsAPI.get("theme", "auto");
+  let draftTheme = currentTheme;
+  let saved = false;
+  root.innerHTML = `
+    <header class="page-header page-header--form">
+      <a href="#/settings" class="page-header__back sf" aria-label="بازگشت">${acIcon("chevron-right")}</a>
+      <h1>ظاهر برنامه</h1>
+    </header>
+    <section class="settings-detail-copy">
+      <h2>پوسته برنامه</h2>
+      <p>ظاهر آچارک را بر اساس سلیقه‌تان انتخاب کنید.</p>
+    </section>
+    <div class="theme-choice-grid" role="radiogroup" aria-label="پوسته برنامه">
+      ${[
+        { id: "light", label: "روشن" },
+        { id: "dark", label: "تیره" },
+        { id: "auto", label: "خودکار" },
+      ].map(({ id, label }) => `
+        <button type="button" class="theme-choice${draftTheme === id ? " is-selected" : ""}" data-theme="${id}" role="radio" aria-checked="${draftTheme === id}">
+          <span class="theme-preview theme-preview--${id}" aria-hidden="true">
+            <span class="theme-preview__top"></span><span class="theme-preview__card"></span><span class="theme-preview__dock"></span>
+          </span>
+          <span class="theme-choice__label">${label}</span>
+          <span class="theme-choice__radio" aria-hidden="true"></span>
+        </button>
+      `).join("")}
+    </div>
+    <div class="settings-savebar">
+      <button type="button" class="btn btn--primary btn--block" id="appearance-save-btn">ذخیره</button>
+    </div>
+  `;
+
+  root.querySelectorAll(".theme-choice").forEach((button) => {
+    button.addEventListener("click", async () => {
+      draftTheme = button.dataset.theme;
+      root.querySelectorAll(".theme-choice").forEach((choice) => {
+        const selected = choice === button;
+        choice.classList.toggle("is-selected", selected);
+        choice.setAttribute("aria-checked", String(selected));
+      });
+      await applyTheme(draftTheme);
+    });
+  });
+  root.querySelector("#appearance-save-btn").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await setTheme(draftTheme);
+      saved = true;
+      showToast("ظاهر برنامه ذخیره شد", "success");
+      navigate("#/settings");
+    } catch (error) {
+      button.disabled = false;
+      showToast(error.message || "ذخیره پوسته انجام نشد", "error");
+    }
+  });
+  return () => {
+    if (!saved) applyTheme(currentTheme);
+  };
+}
+
+async function renderNotificationSettingsPage(params, root) {
+  renderTabBar("#/settings");
+  removeFab();
+  const [reminders, cars] = await Promise.all([
+    RemindersAPI.getAll(),
+    CarsAPI.getAll(),
+  ]);
+  const activeRemindersCount = reminders.filter((reminder) => !reminder.done).length;
+  const carsById = Object.fromEntries(cars.map((car) => [car.id, car]));
+  root.innerHTML = `
+    <header class="page-header page-header--form">
+      <a href="#/settings" class="page-header__back sf" aria-label="بازگشت">${acIcon("chevron-right")}</a>
+      <h1>اعلان‌ها</h1>
+    </header>
+    <section class="settings-detail-copy">
+      <h2>یادآوری‌های خودرو</h2>
+      <p>یادآوری‌های سرویس و معاینه فنی ثبت‌شده برای خودروهایتان را مدیریت کنید.</p>
+    </section>
+    <button type="button" class="settings-nav-row settings-reference-row" id="open-reminders-btn">
+      <span class="settings-nav-row__icon sf">${acIcon("bell")}</span>
+      <span class="settings-nav-row__text">
+        <span class="settings-nav-row__title">مدیریت یادآوری‌ها</span>
+        <span class="settings-nav-row__sub">${activeRemindersCount ? toFaDigits(activeRemindersCount) + " یادآوری فعال" : "یادآوری فعالی وجود ندارد"}</span>
+      </span>
+      <span class="settings-nav-row__chevron sf">${acIcon("chevron-left")}</span>
+    </button>
+  `;
+  root.querySelector("#open-reminders-btn").addEventListener("click", () => {
+    openRemindersManagerPage(reminders, carsById);
+  });
 }
 
 /** صفحه اختصاصی مدیریت همه یادآوری‌ها (باز شده از دکمه «اعلان‌ها» در تنظیمات) */

@@ -3,7 +3,7 @@
  * فعال‌سازی حالت آفلاین کامل با کش‌گذاری Cache-First برای پوسته برنامه
  */
 
-const CACHE_VERSION = 'car-service-cache-v13';
+const CACHE_VERSION = 'car-service-cache-v16';
 
 const APP_SHELL_FILES = [
   './',
@@ -11,6 +11,9 @@ const APP_SHELL_FILES = [
   './manifest.json',
   './css/style.css',
   './js/app.js',
+  './js/account-sync.js',
+  './js/auth.js',
+  './js/auth-ui.js',
   './js/components.js',
   './js/database.js',
   './js/router.js',
@@ -53,6 +56,7 @@ self.addEventListener('fetch', (event) => {
   // فقط درخواست‌های همان مبدا (بدون بک‌اند خارجی) مدیریت می‌شوند
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
 
   event.respondWith(
     caches.match(request).then((cachedResponse) => {

@@ -1,0 +1,17 @@
+{
+  "name": "acharak-api",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-09-25",
+  "workers_dev": true,
+  "vars": {
+    "AUTH_ENV": "production"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "acharak-db",
+      "database_id": "decab9a1-271d-4a13-8c9e-9803a852a73d",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
